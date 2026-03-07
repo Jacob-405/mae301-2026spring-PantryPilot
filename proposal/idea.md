@@ -1,6 +1,6 @@
 Project title: 
 
-
+Constrained Recipe Generator for College Students
 
 Team Members:
 
@@ -10,7 +10,7 @@ Problem Statement:
 
 College students want to cook inexpensive meals but struggle to turn their preferences and constraints into realistic recipe options. With limited budget, time and access to cooking tools they waste time searching for recipes that don't fit what they have and end up defaulting to repetitive less healthy or more expensive takeout. Our nanoGPT-based recipe generator addresses this by taking a student's favorite foods, budget, available time and cooking tools, then producing practical recipes they can make under their real constraints.
 
-Why Now?:
+Why Now?
 
 College costs and food prices are still high creating tight budgets for students to work around. Most students live where kitchen tools are limited like dorms and shared apartments with communal kitchens. Small language models like nano-GPT allow us to create working prototypes for free without big company resources while utilizing public data sources for recipes, food costs and more to evaluate outputs. Students are also already comfortable using AI assistants for planning and brainstorming so there is little user adaptablility needed.
 
