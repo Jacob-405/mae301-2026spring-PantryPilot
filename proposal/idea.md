@@ -13,3 +13,4 @@ A user can enter their favorite foods, a max budget, available cooking time and 
 Risks and Open Questions:
 The top 3 unknowns include; Data quality (Do we have enough recipe data that includes all the constraints?), reliablity (How well can our model generate clear and realistic recipies?) and user adoption (Will students our generator over other sites like Google/TikTok?).
 Planned Data Sources:
+We plan to use publically avaiable recipe data from Kaggle and Hugging Face Datasets as the core training and testing set. We may use metadata like cook time, servings or ingredient info from public API's amd USDA FoodData Central. We will also have to create synthetic labels for non-included data like cooking tools/budget from the other data sources by using simple heuristics and rough cost categories.
