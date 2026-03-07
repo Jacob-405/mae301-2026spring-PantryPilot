@@ -1,5 +1,7 @@
 Project title: 
 
+
+
 Team Members:
 
 Jacob Schmitt - jlschmi9@asu.edu, Mihal Kostadinovski - mkostadi@asu.edu, Ana Jovanovic - anjovan1@asu.edu, Garret Chonko - gchonko@asu.edu, Lucas Rounds - lrounds3@asu.edu
@@ -13,12 +15,21 @@ Why Now?:
 College costs and food prices are still high creating tight budgets for students to work around. Most students live where kitchen tools are limited like dorms and shared apartments with communal kitchens. Small language models like nano-GPT allow us to create working prototypes for free without big company resources while utilizing public data sources for recipes, food costs and more to evaluate outputs. Students are also already comfortable using AI assistants for planning and brainstorming so there is little user adaptablility needed.
 
 Proposed AI-Powered Solution:
+
 Our nanoGPT-based recipe generator helps college students quickely plan meals they can realistically make. The students enters their favorite foods, budget, avaiable time and what cooking tools they have. The system then generates a small set of recipes tailored to those constraints, including simple step-by-step instructions, estimated cost per serving, and time required. It can also suggest substitutions when an ingerdient or tool isn't available and offer variations to match dietary needs. AI adds value because the task isn't just filtering a list of recipes, its creating and adapting recipes to real-life constraints and preferences. Compared to basic yes and no rules an ML model can generate new combinations and substituions, handle flexible/natural input from users, personalize oututs, create easy-to-read instructions and recover missing info by asking smart follow up questions.
+
 Initial Technical Concept:
+
 The data we need includes recipe datasets with the title, ingredients, instructions, toole used, etc. as well as approximate prices of ingredients, common substitutions, dietary tags and user ratings per recipe. The models we might use include; GPT-style text model for generating recipes/instructions given constraints/preferences, classifier/tager for predicting required tools, estimating difficulty and flagging allergen/diet categories from a generated recipe as well as a recommender/ranker for ranking candidate recipies by fitting them to certain budget/time/tool constraints. Our nano-GPT work feeds into this by having the nanoGPT be the recipe generator trained on recipe text so it learns the structure of ingredients/steps. We can also fine-tune the nanoGPT model to a curated recipe dataset to encourage the model to condition outputs on constraints. We can then have smaller ML models filter/rank mutltiple gerneate recipes using certain rules. We can also include small automatic checks and user feedback checks for clarity.
+
 Scope for MVP:
+
 A user can enter their favorite foods, a max budget, available cooking time and available cooking tools and our system returns 3 feasible recipes with ingredients and steps that match the inputed constraints.
+
 Risks and Open Questions:
+
 The top 3 unknowns include; Data quality (Do we have enough recipe data that includes all the constraints?), reliablity (How well can our model generate clear and realistic recipies?) and user adoption (Will students our generator over other sites like Google/TikTok?).
+
 Planned Data Sources:
+
 We plan to use publicly avaiable recipe data from Kaggle and Hugging Face Datasets as the core training and testing set. We may use metadata like cook time, servings or ingredient info from public API's amd USDA FoodData Central. We will also have to create synthetic labels for non-included data like cooking tools/budget from the other data sources by using simple heuristics and rough cost categories.
