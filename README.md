@@ -28,14 +28,18 @@ Or PowerShell:
 ```powershell
 git clone https://github.com/Jacob-405/mae301-2026spring-PantryPilot.git
 cd mae301-2026spring-PantryPilot
+```
 
 ### 2) Create + activate a virtual environment
 PowerShell command: py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
 If PowerShell blocks activation
-PowerShell command: Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+PowerShell command:
+```
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
 .\.venv\Scripts\Activate.ps1
+```
 
 ### 3) Install dependencies
 Upgrade pip
