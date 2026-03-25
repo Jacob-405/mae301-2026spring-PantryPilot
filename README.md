@@ -31,8 +31,11 @@ cd mae301-2026spring-PantryPilot
 ```
 
 ### 2) Create + activate a virtual environment
-PowerShell command: py -3.12 -m venv .venv
+PowerShell command:
+```
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
+```
 
 If PowerShell blocks activation
 
