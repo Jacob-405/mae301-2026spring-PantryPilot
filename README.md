@@ -24,9 +24,10 @@ This is the fastest way to run the Streamlit UI without training.
 Using GitHub Desktop: **File → Clone Repository…**
 
 Or PowerShell:
+
 ```powershell
 git clone https://github.com/Jacob-405/mae301-2026spring-PantryPilot.git
-cd mae301-2026spring-PantryPilot```
+cd mae301-2026spring-PantryPilot
 
 ### 2) Create + activate a virtual environment
 PowerShell command: py -3.12 -m venv .venv
