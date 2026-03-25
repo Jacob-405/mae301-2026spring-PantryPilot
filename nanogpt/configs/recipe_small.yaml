@@ -1,0 +1,34 @@
+# paths are relative to repo root
+data_dir: nanogpt/data/processed
+out_dir: nanogpt/outputs
+
+# GPT-2 tokenizer vocab size
+vocab_size: 50257
+
+# keep small for 8GB GPU to start
+block_size: 256
+batch_size: 8
+
+# model size
+n_layer: 6
+n_head: 6
+n_embd: 384
+dropout: 0.1
+
+# training
+learning_rate: 0.0003
+weight_decay: 0.1
+max_iters: 4000
+eval_interval: 500
+eval_iters: 40
+log_interval: 50
+grad_clip: 1.0
+seed: 1337
+
+# mixed precision
+use_amp: true
+
+# optional LR decay
+lr_decay: true
+warmup_iters: 200
+min_lr: 0.00005
