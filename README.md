@@ -18,7 +18,7 @@ A constraint-aware recipe generator for college students (budget, time, and cook
 ---
 
 ## Quickstart (recommended): Run the MVP using a provided checkpoint
-This is the fastest way for teammates to run the Streamlit UI without training.
+This is the fastest way to run the Streamlit UI without training.
 
 ### 1) Clone the repo
 Using GitHub Desktop: **File → Clone Repository…**
