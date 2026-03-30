@@ -1,89 +1,98 @@
-# Recipe Generator (nanoGPT)
+# PantryPilot
 
-A constraint-aware recipe generator for college students (budget, time, and cooking tools).
+PantryPilot is a deterministic weekly meal-planning app built with Streamlit. It plans seven days of meals from local recipe data, filters unsafe recipes when allergen data is unknown, limits repetition, and estimates shopping costs from either:
 
-## Repository Structure
-- [Proposal](proposal/idea.md)
-- [nanoGPT](nanogpt/)
-- [MVP](mvp/)
-- [Docs](docs/)
+- a built-in mock grocery catalog
+- Kroger or Fry's pricing when API credentials are configured
 
-## Run PantryPilot Locally (Windows 11)
+If Kroger credentials are missing, no nearby store is selected, or Kroger pricing requests fail, PantryPilot automatically falls back to mock pricing.
 
-### What you need (one-time installs)
-- **Python 3.12.x (64-bit)** (during install: check **“Add python.exe to PATH”**)
-- **Git** (or GitHub Desktop)
-- (Optional) **VS Code** for editing
+## Requirements
 
----
+- Python 3.12
+- Windows PowerShell (commands below assume Windows)
 
-## Quickstart (recommended): Run the MVP using a provided checkpoint
-This is the fastest way to run the Streamlit UI without training.
+## Local setup
 
-### 1) Clone the repo
-Using GitHub Desktop: **File → Clone Repository…**
-
-Or PowerShell:
+1. Create and activate a virtual environment.
 
 ```powershell
-git clone https://github.com/Jacob-405/mae301-2026spring-PantryPilot.git
-cd mae301-2026spring-PantryPilot
-```
-
-### 2) Create + activate a virtual environment
-PowerShell command:
-```
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-If PowerShell blocks activation
+2. Install dependencies.
 
-PowerShell command:
-```
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-.\.venv\Scripts\Activate.ps1
-```
-
-### 3) Install dependencies
-Upgrade pip
-
-PowerShell command:
-```
+```powershell
 python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-Install PyTorch, try cu 121 first
+## Kroger or Fry's pricing setup
 
-PowerShell command:
+PantryPilot reads Kroger credentials from environment variables only.
+
+Required environment variables:
+
+- `KROGER_CLIENT_ID`
+- `KROGER_CLIENT_SECRET`
+
+Optional environment variable:
+
+- `KROGER_API_SCOPE`
+  Default: `product.compact`
+
+Example PowerShell session:
+
+```powershell
+$env:KROGER_CLIENT_ID="your-client-id"
+$env:KROGER_CLIENT_SECRET="your-client-secret"
+$env:KROGER_API_SCOPE="product.compact"
 ```
-python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-```
 
-If cu121 fails, try cu118
+If you do not set these variables, the app still works and uses mock grocery pricing.
 
-PowerShell command:
-```
-python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-```
+## Run the app
 
-Install remaining packages
-
-PowerShell command:
-```
-python -m pip install numpy tqdm pyyaml tiktoken streamlit
-```
-
-### 4) Add the trained model checkpoint
-You need a checkpoint file from teammembers (e.q., ckpt_best.pt)
-
-Place it here:
-nanogpt/outputs/ckpt_best.pt
-
-### 5) Run the Streamlit MVP
-PowerShell command:
-```
+```powershell
 python -m streamlit run mvp/app.py
 ```
 
-Open the Local URL Streamlit prints (usually http://localhost:8501)
+Then open the local Streamlit URL shown in the terminal, usually `http://localhost:8501`.
+
+## Using real store pricing
+
+1. Start the app.
+2. In the `Pricing` section, switch to `Real store`.
+3. Enter a ZIP code.
+4. Choose a nearby Kroger or Fry's store if locations are available.
+5. Generate the weekly plan.
+
+When a Kroger product has no usable price or a request fails mid-run, PantryPilot uses mock pricing for the missing item instead of crashing.
+
+## Run tests
+
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -v
+```
+
+Phase 1 and Phase 2 coverage includes:
+
+- allergy filtering
+- shopping-list aggregation
+- budget compliance
+- provider fallback behavior
+- missing-price handling
+
+## Kroger API references
+
+PantryPilot's Phase 2 implementation follows Kroger's public API documentation for:
+
+- OAuth2 client credentials
+- `/locations` ZIP-code lookup
+- `/products` search with `filter.locationId`
+
+Reference links:
+
+- [Kroger Public APIs (Postman)](https://www.postman.com/kroger/the-kroger-co-s-public-workspace/documentation/ki6utqb/kroger-public-apis)
+- [Kroger Developers](https://developer.kroger.com/)
