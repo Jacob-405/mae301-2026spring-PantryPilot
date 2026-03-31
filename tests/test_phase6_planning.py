@@ -586,6 +586,79 @@ class PlanningPhase6Tests(unittest.TestCase):
 
         self.assertTrue(all(meal.recipe.title != "Breakfast Only" for meal in plan.meals))
 
+    def test_leftovers_mode_allows_more_controlled_reuse(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=VarietyRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "cheap staple": GroceryProduct("cheap staple", 1.0, "item", 1.0),
+                    "expensive vegetable": GroceryProduct("expensive vegetable", 1.0, "item", 7.0),
+                    "expensive legume": GroceryProduct("expensive legume", 1.0, "item", 7.0),
+                    "expensive grain": GroceryProduct("expensive grain", 1.0, "item", 7.0),
+                }
+            ),
+        )
+        common_kwargs = {
+            "weekly_budget": 60.0,
+            "servings": 2,
+            "cuisine_preferences": (),
+            "allergies": (),
+            "excluded_ingredients": (),
+            "diet_restrictions": (),
+            "pantry_staples": (),
+            "max_prep_time_minutes": 30,
+            "meals_per_day": 1,
+            "meal_structure": ("dinner",),
+            "daily_calorie_target_min": 900,
+            "daily_calorie_target_max": 1300,
+            "variety_preference": "balanced",
+        }
+        off_plan = planner.create_plan(
+            PlannerRequest(**common_kwargs, leftovers_mode="off")
+        )
+        frequent_plan = planner.create_plan(
+            PlannerRequest(**common_kwargs, leftovers_mode="frequent")
+        )
+
+        off_counts = Counter(meal.recipe.title for meal in off_plan.meals)
+        frequent_counts = Counter(meal.recipe.title for meal in frequent_plan.meals)
+
+        self.assertGreater(
+            frequent_counts["Cheap Rice Bowl"],
+            off_counts["Cheap Rice Bowl"],
+        )
+
+    def test_leftovers_mode_preserves_budget_and_allergy_safety(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=ReplacementRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "base": GroceryProduct("base", 1.0, "item", 2.0),
+                    "peanut ingredient": GroceryProduct("peanut ingredient", 1.0, "item", 2.0),
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=40.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=("peanut",),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            meal_structure=("dinner",),
+            daily_calorie_target_min=1200,
+            daily_calorie_target_max=1400,
+            leftovers_mode="frequent",
+        )
+
+        plan = planner.create_plan(request)
+
+        self.assertTrue(all("Peanut" not in meal.recipe.title for meal in plan.meals))
+        self.assertLessEqual(plan.estimated_total_cost, request.weekly_budget)
+
 
 if __name__ == "__main__":
     unittest.main()

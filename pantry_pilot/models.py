@@ -63,6 +63,7 @@ class PlannerRequest:
     daily_calorie_target_min: int = 1600
     daily_calorie_target_max: int = 2200
     variety_preference: str = "balanced"
+    leftovers_mode: str = "off"
 
 
 @dataclass(frozen=True)

@@ -31,6 +31,7 @@ class VarietyProfile:
     cuisine_repetition_penalty: float
     recent_cuisine_penalty: float
     calorie_target_weight: float
+    leftovers_bonus: float
 
 
 class PlannerError(Exception):
@@ -271,7 +272,7 @@ class WeeklyMealPlanner:
         slot_number: int,
         current_total: float,
     ) -> tuple[Recipe, float] | None:
-        best_choice: tuple[tuple[float, float, int, int, int, int, int, str], Recipe, float] | None = None
+        best_choice: tuple[tuple[float, float, int, int, int, int, int, int, str], Recipe, float] | None = None
 
         for recipe in candidates:
             projected_quantities = {
@@ -290,6 +291,7 @@ class WeeklyMealPlanner:
             recent_repeat_count = self._recent_repeat_count(meals, recipe.title)
             cuisine_repeat_count = self._cuisine_count(meals, recipe.cuisine)
             recent_cuisine_count = self._recent_cuisine_count(meals, recipe.cuisine)
+            leftovers_score = self._leftovers_score(meals, recipe.title, slot_number)
             projected_day_calories = self._projected_day_calories(
                 all_candidates,
                 meals,
@@ -311,9 +313,11 @@ class WeeklyMealPlanner:
             effective_cost += cuisine_repeat_count * variety_profile.cuisine_repetition_penalty
             effective_cost += recent_cuisine_count * variety_profile.recent_cuisine_penalty
             effective_cost += calorie_penalty * variety_profile.calorie_target_weight
+            effective_cost -= leftovers_score * variety_profile.leftovers_bonus
             sort_key = (
                 round(effective_cost, 4),
                 round(calorie_penalty, 4),
+                -leftovers_score,
                 -pantry_match_count,
                 repeat_count,
                 slot_repeat_count,
@@ -378,7 +382,7 @@ class WeeklyMealPlanner:
     def _variety_profile(self, request: PlannerRequest) -> VarietyProfile:
         preference = normalize_name(request.variety_preference) or "balanced"
         if preference == "low":
-            return VarietyProfile(
+            profile = VarietyProfile(
                 same_recipe_weekly_cap=self.same_recipe_weekly_cap + 1,
                 repetition_penalty=self.repetition_penalty * 0.55,
                 slot_repetition_penalty=self.slot_repetition_penalty * 0.55,
@@ -386,9 +390,10 @@ class WeeklyMealPlanner:
                 cuisine_repetition_penalty=0.45,
                 recent_cuisine_penalty=0.2,
                 calorie_target_weight=0.85,
+                leftovers_bonus=0.55,
             )
-        if preference == "high":
-            return VarietyProfile(
+        elif preference == "high":
+            profile = VarietyProfile(
                 same_recipe_weekly_cap=max(1, self.same_recipe_weekly_cap - 1),
                 repetition_penalty=self.repetition_penalty * 1.8,
                 slot_repetition_penalty=self.slot_repetition_penalty * 1.8,
@@ -396,16 +401,46 @@ class WeeklyMealPlanner:
                 cuisine_repetition_penalty=1.2,
                 recent_cuisine_penalty=0.8,
                 calorie_target_weight=1.15,
+                leftovers_bonus=0.15,
             )
-        return VarietyProfile(
-            same_recipe_weekly_cap=self.same_recipe_weekly_cap,
-            repetition_penalty=self.repetition_penalty * 1.2,
-            slot_repetition_penalty=self.slot_repetition_penalty * 1.2,
-            recent_repeat_penalty=self.recent_repeat_penalty * 1.2,
-            cuisine_repetition_penalty=0.8,
-            recent_cuisine_penalty=0.45,
-            calorie_target_weight=1.0,
-        )
+        else:
+            profile = VarietyProfile(
+                same_recipe_weekly_cap=self.same_recipe_weekly_cap,
+                repetition_penalty=self.repetition_penalty * 1.2,
+                slot_repetition_penalty=self.slot_repetition_penalty * 1.2,
+                recent_repeat_penalty=self.recent_repeat_penalty * 1.2,
+                cuisine_repetition_penalty=0.8,
+                recent_cuisine_penalty=0.45,
+                calorie_target_weight=1.0,
+                leftovers_bonus=0.35,
+            )
+        return self._apply_leftovers_mode(profile, request.leftovers_mode)
+
+    def _apply_leftovers_mode(self, profile: VarietyProfile, leftovers_mode: str) -> VarietyProfile:
+        mode = normalize_name(leftovers_mode) or "off"
+        if mode == "frequent":
+            return VarietyProfile(
+                same_recipe_weekly_cap=profile.same_recipe_weekly_cap + 2,
+                repetition_penalty=profile.repetition_penalty * 0.45,
+                slot_repetition_penalty=profile.slot_repetition_penalty * 0.55,
+                recent_repeat_penalty=profile.recent_repeat_penalty * 0.6,
+                cuisine_repetition_penalty=profile.cuisine_repetition_penalty * 0.75,
+                recent_cuisine_penalty=profile.recent_cuisine_penalty * 0.8,
+                calorie_target_weight=profile.calorie_target_weight,
+                leftovers_bonus=1.0,
+            )
+        if mode == "moderate":
+            return VarietyProfile(
+                same_recipe_weekly_cap=profile.same_recipe_weekly_cap + 1,
+                repetition_penalty=profile.repetition_penalty * 0.7,
+                slot_repetition_penalty=profile.slot_repetition_penalty * 0.8,
+                recent_repeat_penalty=profile.recent_repeat_penalty * 0.85,
+                cuisine_repetition_penalty=profile.cuisine_repetition_penalty * 0.9,
+                recent_cuisine_penalty=profile.recent_cuisine_penalty * 0.9,
+                calorie_target_weight=profile.calorie_target_weight,
+                leftovers_bonus=0.65,
+            )
+        return profile
 
     def _pantry_match_count(self, recipe: Recipe, pantry_inventory: frozenset[str]) -> int:
         return sum(
@@ -480,7 +515,7 @@ class WeeklyMealPlanner:
             for meal in fixed_meals
             if meal.day == day_number
         )
-        best_choice: tuple[tuple[float, float, int, int, int, int, int, str], Recipe] | None = None
+        best_choice: tuple[tuple[float, float, int, int, int, int, int, int, str], Recipe] | None = None
 
         for recipe in candidates:
             projected_quantities = {
@@ -499,6 +534,7 @@ class WeeklyMealPlanner:
             nearby_repeat_count = self._neighbor_recipe_count(fixed_meals, recipe.title, day_number, slot_number)
             cuisine_repeat_count = self._cuisine_count(fixed_meals, recipe.cuisine)
             nearby_cuisine_count = self._neighbor_cuisine_count(fixed_meals, recipe.cuisine, day_number, slot_number)
+            leftovers_score = self._leftovers_score(fixed_meals, recipe.title, slot_number)
             projected_day_calories = day_fixed_calories + self._meal_calories(recipe, request.servings)
             calorie_penalty = self._calorie_target_penalty(
                 projected_day_calories,
@@ -513,9 +549,11 @@ class WeeklyMealPlanner:
             effective_cost += cuisine_repeat_count * variety_profile.cuisine_repetition_penalty
             effective_cost += nearby_cuisine_count * variety_profile.recent_cuisine_penalty
             effective_cost += calorie_penalty * variety_profile.calorie_target_weight
+            effective_cost -= leftovers_score * variety_profile.leftovers_bonus
             sort_key = (
                 round(effective_cost, 4),
                 round(calorie_penalty, 4),
+                -leftovers_score,
                 -pantry_match_count,
                 repeat_count,
                 slot_repeat_count,
@@ -623,6 +661,11 @@ class WeeklyMealPlanner:
 
     def _recent_repeat_count(self, meals: list[PlannedMeal], recipe_title: str) -> int:
         return sum(1 for meal in meals[-3:] if meal.recipe.title == recipe_title)
+
+    def _leftovers_score(self, meals: list[PlannedMeal], recipe_title: str, slot_number: int) -> int:
+        slot_matches = self._slot_recipe_count(meals, recipe_title, slot_number)
+        recent_matches = self._recent_repeat_count(meals, recipe_title)
+        return (slot_matches * 2) + recent_matches
 
     def _neighbor_recipe_count(
         self,

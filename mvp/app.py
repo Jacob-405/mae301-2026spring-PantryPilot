@@ -17,6 +17,7 @@ MEAL_STRUCTURE_OPTIONS = {
     "Lunch + Dinner": ("lunch", "dinner"),
     "Dinner Only": ("dinner",),
 }
+LEFTOVERS_MODE_OPTIONS = ("Off", "Moderate", "Frequent")
 
 FIELD_DEFAULTS = {
     "weekly_budget_input": 90.0,
@@ -33,6 +34,7 @@ FIELD_DEFAULTS = {
     "calorie_target_min_input": 1600,
     "calorie_target_max_input": 2200,
     "variety_preference_input": "Balanced",
+    "leftovers_mode_input": "Off",
 }
 
 PRESET_SCENARIOS = {
@@ -50,6 +52,7 @@ PRESET_SCENARIOS = {
         "calorie_target_min_input": 1800,
         "calorie_target_max_input": 2300,
         "variety_preference_input": "Balanced",
+        "leftovers_mode_input": "Off",
     },
     "Vegetarian Budget Week": {
         "weekly_budget_input": 75.0,
@@ -65,6 +68,7 @@ PRESET_SCENARIOS = {
         "calorie_target_min_input": 1700,
         "calorie_target_max_input": 2200,
         "variety_preference_input": "High",
+        "leftovers_mode_input": "Moderate",
     },
     "Pantry-First Week": {
         "weekly_budget_input": 60.0,
@@ -80,6 +84,7 @@ PRESET_SCENARIOS = {
         "calorie_target_min_input": 1700,
         "calorie_target_max_input": 2300,
         "variety_preference_input": "Low",
+        "leftovers_mode_input": "Frequent",
     },
     "Quick Prep Week": {
         "weekly_budget_input": 95.0,
@@ -95,6 +100,7 @@ PRESET_SCENARIOS = {
         "calorie_target_min_input": 1800,
         "calorie_target_max_input": 2400,
         "variety_preference_input": "High",
+        "leftovers_mode_input": "Moderate",
     },
 }
 
@@ -325,6 +331,7 @@ def render_meal_plan(request: PlannerRequest, plan, planner: WeeklyMealPlanner, 
         if plan.selected_store:
             st.caption(f"Store: {plan.selected_store}")
         st.caption(f"Variety preference: {request.variety_preference.title()}")
+        st.caption(f"Leftovers mode: {request.leftovers_mode.title()}")
         st.caption("Meal structure: " + " + ".join(value.title() for value in request.meal_structure or ("meal",)))
     with summary_right:
         budget_status = "Within budget" if remaining_budget >= 0 else "Over budget"
@@ -560,7 +567,7 @@ with st.form("weekly-planner-form"):
             help="Comma-separated ingredients assumed to already be on hand.",
         )
     with calorie_col:
-        st.markdown("**Calories And Variety**")
+        st.markdown("**Calories, Variety, And Leftovers**")
         st.markdown(
             "Daily target range: **"
             + format_calorie_target(
@@ -575,7 +582,17 @@ with st.form("weekly-planner-form"):
             key="variety_preference_input",
             help="Higher variety makes repeats less likely, but still stays deterministic for the same settings.",
         )
-        st.caption("Calories and variety both influence selection. Allergy filtering and budget checks still apply first.")
+        leftovers_mode = st.selectbox(
+            "Leftovers mode",
+            LEFTOVERS_MODE_OPTIONS,
+            key="leftovers_mode_input",
+            help="Higher leftovers mode intentionally allows more repeated meals to cut down cooking across the week.",
+        )
+        if leftovers_mode != "Off":
+            st.caption("Leftovers mode is enabled. PantryPilot will intentionally allow more controlled meal reuse.")
+        st.caption(
+            "Calories, variety, and leftovers all influence selection. Allergy filtering and budget checks still apply first."
+        )
 
     submitted = st.form_submit_button("Create 7-day plan", use_container_width=True)
 
@@ -622,6 +639,7 @@ if submitted:
         daily_calorie_target_min=st.session_state["calorie_target_min_input"],
         daily_calorie_target_max=st.session_state["calorie_target_max_input"],
         variety_preference=normalize_name(variety_preference),
+        leftovers_mode=normalize_name(leftovers_mode),
     )
     planner, pricing_context = build_planner_and_context(request)
 
