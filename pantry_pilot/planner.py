@@ -129,6 +129,58 @@ class WeeklyMealPlanner:
     def filter_recipes(self, request: PlannerRequest) -> tuple[Recipe, ...]:
         return self._filter_recipes(request)
 
+    def replace_meal(
+        self,
+        request: PlannerRequest,
+        existing_plan: MealPlan,
+        day_number: int,
+        slot_number: int,
+    ) -> MealPlan:
+        ordered_meals = list(sorted(existing_plan.meals, key=lambda meal: (meal.day, meal.slot)))
+        target_meal = next(
+            (meal for meal in ordered_meals if meal.day == day_number and meal.slot == slot_number),
+            None,
+        )
+        if target_meal is None:
+            raise PlannerError("The selected meal could not be found in the current plan.")
+
+        candidates = self._filter_recipes(request)
+        if not candidates:
+            raise PlannerError("No recipes match the current safety and planning filters.")
+
+        pantry_inventory = self._normalized_pantry_inventory(request)
+        variety_profile = self._variety_profile(request)
+        fixed_meals = [meal for meal in ordered_meals if meal is not target_meal]
+        fixed_quantities = self._quantities_for_meals(fixed_meals, request, pantry_inventory)
+        slot_candidates = self._recipes_for_slot(candidates, request.meals_per_day, slot_number)
+
+        replacement = self._select_replacement_recipe(
+            slot_candidates,
+            request,
+            pantry_inventory,
+            variety_profile,
+            fixed_meals,
+            fixed_quantities,
+            day_number,
+            slot_number,
+            target_meal.recipe.title,
+        )
+        if replacement is None:
+            raise PlannerError("No viable replacement meal fits the current week and budget constraints.")
+
+        replaced_entries: list[tuple[int, int, Recipe]] = []
+        for meal in ordered_meals:
+            recipe = replacement if meal is target_meal else meal.recipe
+            replaced_entries.append((meal.day, meal.slot, recipe))
+
+        replacement_label = f"{day_name(day_number)} {slot_label(request.meals_per_day, slot_number).lower()}"
+        notes = list(existing_plan.notes)
+        if replacement.title == target_meal.recipe.title:
+            notes.append(f"No alternative fit {replacement_label}, so the same recipe was kept.")
+        else:
+            notes.append(f"Replaced {replacement_label} with {replacement.title}.")
+        return self._finalize_meal_plan(request, replaced_entries, tuple(notes))
+
     def _filter_recipes(self, request: PlannerRequest) -> tuple[Recipe, ...]:
         allergies = {normalize_name(value) for value in request.allergies}
         excluded = {normalize_ingredient_name(value) for value in request.excluded_ingredients}
@@ -357,6 +409,159 @@ class WeeklyMealPlanner:
             if normalize_ingredient_name(ingredient.name) in pantry_inventory
         )
 
+    def _quantities_for_meals(
+        self,
+        meals: list[PlannedMeal],
+        request: PlannerRequest,
+        pantry_inventory: frozenset[str],
+    ) -> dict[str, AggregatedIngredient]:
+        quantities: dict[str, AggregatedIngredient] = {}
+        for meal in meals:
+            self._apply_recipe(quantities, meal.recipe, request, pantry_inventory)
+        return quantities
+
+    def _select_replacement_recipe(
+        self,
+        slot_candidates: tuple[Recipe, ...],
+        request: PlannerRequest,
+        pantry_inventory: frozenset[str],
+        variety_profile: VarietyProfile,
+        fixed_meals: list[PlannedMeal],
+        fixed_quantities: dict[str, AggregatedIngredient],
+        day_number: int,
+        slot_number: int,
+        original_title: str,
+    ) -> Recipe | None:
+        alternative_candidates = tuple(
+            recipe for recipe in slot_candidates if recipe.title != original_title
+        )
+        replacement = self._best_replacement_choice(
+            alternative_candidates,
+            request,
+            pantry_inventory,
+            variety_profile,
+            fixed_meals,
+            fixed_quantities,
+            day_number,
+            slot_number,
+        )
+        if replacement is not None:
+            return replacement
+        return self._best_replacement_choice(
+            slot_candidates,
+            request,
+            pantry_inventory,
+            variety_profile,
+            fixed_meals,
+            fixed_quantities,
+            day_number,
+            slot_number,
+        )
+
+    def _best_replacement_choice(
+        self,
+        candidates: tuple[Recipe, ...],
+        request: PlannerRequest,
+        pantry_inventory: frozenset[str],
+        variety_profile: VarietyProfile,
+        fixed_meals: list[PlannedMeal],
+        fixed_quantities: dict[str, AggregatedIngredient],
+        day_number: int,
+        slot_number: int,
+    ) -> Recipe | None:
+        fixed_total = self._estimate_total_cost(fixed_quantities)
+        day_fixed_calories = sum(
+            self._meal_calories(meal.recipe, meal.scaled_servings)
+            for meal in fixed_meals
+            if meal.day == day_number
+        )
+        best_choice: tuple[tuple[float, float, int, int, int, int, int, str], Recipe] | None = None
+
+        for recipe in candidates:
+            projected_quantities = {
+                name: AggregatedIngredient(quantity=value.quantity, unit=value.unit)
+                for name, value in fixed_quantities.items()
+            }
+            self._apply_recipe(projected_quantities, recipe, request, pantry_inventory)
+            projected_total = self._estimate_total_cost(projected_quantities)
+            if projected_total > request.weekly_budget + 1e-9:
+                continue
+
+            incremental_cost = projected_total - fixed_total
+            pantry_match_count = self._pantry_match_count(recipe, pantry_inventory)
+            repeat_count = self._recipe_count(fixed_meals, recipe.title)
+            slot_repeat_count = self._slot_recipe_count(fixed_meals, recipe.title, slot_number)
+            nearby_repeat_count = self._neighbor_recipe_count(fixed_meals, recipe.title, day_number, slot_number)
+            cuisine_repeat_count = self._cuisine_count(fixed_meals, recipe.cuisine)
+            nearby_cuisine_count = self._neighbor_cuisine_count(fixed_meals, recipe.cuisine, day_number, slot_number)
+            projected_day_calories = day_fixed_calories + self._meal_calories(recipe, request.servings)
+            calorie_penalty = self._calorie_target_penalty(
+                projected_day_calories,
+                request.daily_calorie_target_min,
+                request.daily_calorie_target_max,
+            )
+            effective_cost = incremental_cost
+            effective_cost -= pantry_match_count * self.pantry_preference_bonus
+            effective_cost += repeat_count * variety_profile.repetition_penalty
+            effective_cost += slot_repeat_count * variety_profile.slot_repetition_penalty
+            effective_cost += nearby_repeat_count * variety_profile.recent_repeat_penalty
+            effective_cost += cuisine_repeat_count * variety_profile.cuisine_repetition_penalty
+            effective_cost += nearby_cuisine_count * variety_profile.recent_cuisine_penalty
+            effective_cost += calorie_penalty * variety_profile.calorie_target_weight
+            sort_key = (
+                round(effective_cost, 4),
+                round(calorie_penalty, 4),
+                -pantry_match_count,
+                repeat_count,
+                slot_repeat_count,
+                nearby_repeat_count,
+                cuisine_repeat_count,
+                nearby_cuisine_count,
+                recipe.title,
+            )
+            if best_choice is None or sort_key < best_choice[0]:
+                best_choice = (sort_key, recipe)
+
+        if best_choice is None:
+            return None
+        return best_choice[1]
+
+    def _finalize_meal_plan(
+        self,
+        request: PlannerRequest,
+        ordered_entries: list[tuple[int, int, Recipe]],
+        notes: tuple[str, ...],
+    ) -> MealPlan:
+        pantry_inventory = self._normalized_pantry_inventory(request)
+        purchased_quantities: dict[str, AggregatedIngredient] = {}
+        meals: list[PlannedMeal] = []
+
+        for day_number, slot_number, recipe in sorted(ordered_entries, key=lambda entry: (entry[0], entry[1])):
+            current_total = self._estimate_total_cost(purchased_quantities)
+            self._apply_recipe(purchased_quantities, recipe, request, pantry_inventory)
+            projected_total = self._estimate_total_cost(purchased_quantities)
+            meals.append(
+                PlannedMeal(
+                    day=day_number,
+                    slot=slot_number,
+                    recipe=recipe,
+                    scaled_servings=request.servings,
+                    incremental_cost=round(projected_total - current_total, 2),
+                )
+            )
+
+        shopping_list, total_cost = self._build_shopping_list(purchased_quantities)
+        if total_cost > request.weekly_budget + 1e-9:
+            raise PlannerError("The generated plan exceeds the weekly budget.")
+        return MealPlan(
+            meals=tuple(meals),
+            shopping_list=shopping_list,
+            estimated_total_cost=round(total_cost, 2),
+            notes=notes,
+            pricing_source=self.pricing_source,
+            selected_store=self.selected_store,
+        )
+
     def _meal_calories(self, recipe: Recipe, servings: int) -> int:
         return recipe.estimated_calories_per_serving * servings
 
@@ -414,6 +619,22 @@ class WeeklyMealPlanner:
     def _recent_repeat_count(self, meals: list[PlannedMeal], recipe_title: str) -> int:
         return sum(1 for meal in meals[-3:] if meal.recipe.title == recipe_title)
 
+    def _neighbor_recipe_count(
+        self,
+        meals: list[PlannedMeal],
+        recipe_title: str,
+        day_number: int,
+        slot_number: int,
+        window_size: int = 2,
+    ) -> int:
+        target_index = self._meal_sequence_index(day_number, slot_number)
+        return sum(
+            1
+            for meal in meals
+            if meal.recipe.title == recipe_title
+            and abs(self._meal_sequence_index(meal.day, meal.slot) - target_index) <= window_size
+        )
+
     def _cuisine_count(self, meals: list[PlannedMeal], cuisine: str) -> int:
         normalized_cuisine = normalize_name(cuisine)
         return sum(1 for meal in meals if normalize_name(meal.recipe.cuisine) == normalized_cuisine)
@@ -421,6 +642,26 @@ class WeeklyMealPlanner:
     def _recent_cuisine_count(self, meals: list[PlannedMeal], cuisine: str) -> int:
         normalized_cuisine = normalize_name(cuisine)
         return sum(1 for meal in meals[-4:] if normalize_name(meal.recipe.cuisine) == normalized_cuisine)
+
+    def _neighbor_cuisine_count(
+        self,
+        meals: list[PlannedMeal],
+        cuisine: str,
+        day_number: int,
+        slot_number: int,
+        window_size: int = 2,
+    ) -> int:
+        target_index = self._meal_sequence_index(day_number, slot_number)
+        normalized_cuisine = normalize_name(cuisine)
+        return sum(
+            1
+            for meal in meals
+            if normalize_name(meal.recipe.cuisine) == normalized_cuisine
+            and abs(self._meal_sequence_index(meal.day, meal.slot) - target_index) <= window_size
+        )
+
+    def _meal_sequence_index(self, day_number: int, slot_number: int) -> int:
+        return ((day_number - 1) * 10) + slot_number
 
     def _estimate_total_cost(self, quantities: dict[str, AggregatedIngredient]) -> float:
         total = 0.0

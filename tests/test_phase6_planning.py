@@ -142,6 +142,70 @@ class AllergySafetyRecipeProvider(LocalRecipeProvider):
         )
 
 
+class ReplacementRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe(
+                recipe_id="target-bowl",
+                title="Target Bowl",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=650,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("base", 1.0, "item"),),
+                steps=("Cook the base.",),
+            ),
+            Recipe(
+                recipe_id="swap-bowl",
+                title="Swap Bowl",
+                cuisine="mexican",
+                base_servings=2,
+                estimated_calories_per_serving=660,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("base", 1.0, "item"),),
+                steps=("Cook the swap.",),
+            ),
+            Recipe(
+                recipe_id="peanut-swap",
+                title="Peanut Swap",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=655,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset({"peanut"}),
+                ingredients=(RecipeIngredient("peanut ingredient", 1.0, "item"),),
+                steps=("Cook the peanut meal.",),
+            ),
+        )
+
+
+class SingleRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe(
+                recipe_id="only-dinner",
+                title="Only Dinner",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=420,
+                prep_time_minutes=15,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("safe base", 1.0, "item"),),
+                steps=("Cook the only dinner.",),
+            ),
+        )
+
+
 class PlanningPhase6Tests(unittest.TestCase):
     def test_daily_calorie_target_changes_recipe_selection(self) -> None:
         planner = WeeklyMealPlanner(
@@ -322,6 +386,98 @@ class PlanningPhase6Tests(unittest.TestCase):
 
         with self.assertRaises(PlannerError):
             planner.create_plan(request)
+
+    def test_replace_meal_preserves_other_slots_and_avoids_same_recipe_when_possible(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=ReplacementRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "base": GroceryProduct("base", 1.0, "item", 2.0),
+                    "peanut ingredient": GroceryProduct("peanut ingredient", 1.0, "item", 2.0),
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=40.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=("peanut",),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            daily_calorie_target_min=1200,
+            daily_calorie_target_max=1400,
+            variety_preference="balanced",
+        )
+        original_plan = planner.create_plan(request)
+
+        replaced_plan = planner.replace_meal(request, original_plan, day_number=1, slot_number=1)
+
+        self.assertEqual(original_plan.meals[0].recipe.title, "Target Bowl")
+        self.assertEqual(replaced_plan.meals[0].recipe.title, "Swap Bowl")
+        self.assertEqual(
+            [(meal.day, meal.slot, meal.recipe.recipe_id) for meal in original_plan.meals[1:]],
+            [(meal.day, meal.slot, meal.recipe.recipe_id) for meal in replaced_plan.meals[1:]],
+        )
+        self.assertLessEqual(replaced_plan.estimated_total_cost, request.weekly_budget)
+
+    def test_replace_meal_still_respects_allergy_filters(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=ReplacementRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "base": GroceryProduct("base", 1.0, "item", 2.0),
+                    "peanut ingredient": GroceryProduct("peanut ingredient", 1.0, "item", 2.0),
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=40.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=("peanut",),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            daily_calorie_target_min=1200,
+            daily_calorie_target_max=1400,
+        )
+        original_plan = planner.create_plan(request)
+
+        replaced_plan = planner.replace_meal(request, original_plan, day_number=1, slot_number=1)
+
+        self.assertNotEqual(replaced_plan.meals[0].recipe.title, "Peanut Swap")
+
+    def test_replace_meal_keeps_same_recipe_when_no_alternative_is_viable(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=SingleRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {"safe base": GroceryProduct("safe base", 1.0, "item", 2.0)}
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=30.0,
+            servings=2,
+            cuisine_preferences=("american",),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            daily_calorie_target_min=650,
+            daily_calorie_target_max=850,
+        )
+        original_plan = planner.create_plan(request)
+
+        replaced_plan = planner.replace_meal(request, original_plan, day_number=1, slot_number=1)
+
+        self.assertEqual(replaced_plan.meals[0].recipe.title, original_plan.meals[0].recipe.title)
+        self.assertIn("same recipe was kept", replaced_plan.notes[-1].lower())
 
 
 if __name__ == "__main__":

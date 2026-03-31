@@ -102,12 +102,30 @@ def initialize_form_state() -> None:
     for key, value in FIELD_DEFAULTS.items():
         st.session_state.setdefault(key, value)
     st.session_state.setdefault("preset_selector", "Balanced Budget Week")
+    st.session_state.setdefault("current_request", None)
+    st.session_state.setdefault("current_plan", None)
+    st.session_state.setdefault("plan_feedback", "")
+    st.session_state.setdefault("plan_error", "")
 
 
 def apply_preset(preset_name: str) -> None:
     preset = PRESET_SCENARIOS[preset_name]
     for key, value in preset.items():
         st.session_state[key] = value
+
+
+def build_planner_and_context(request: PlannerRequest) -> tuple[WeeklyMealPlanner, object]:
+    pricing_context = build_pricing_context(
+        pricing_mode=request.pricing_mode,
+        zip_code=request.zip_code,
+        store_location_id=request.store_location_id,
+    )
+    planner = WeeklyMealPlanner(
+        grocery_provider=pricing_context.provider,
+        pricing_source=pricing_context.pricing_source,
+        selected_store=pricing_context.selected_store,
+    )
+    return planner, pricing_context
 
 
 def calorie_status_label(daily_calories: int, minimum: int, maximum: int) -> tuple[str, str]:
@@ -256,9 +274,7 @@ def diagnose_plan_failure(planner: WeeklyMealPlanner, request: PlannerRequest) -
     )
 
 
-def render_meal_plan(request: PlannerRequest, planner: WeeklyMealPlanner, pricing_context) -> None:
-    plan = planner.create_plan(request)
-
+def render_meal_plan(request: PlannerRequest, plan, planner: WeeklyMealPlanner, pricing_context) -> None:
     pricing_header = "Mock pricing" if plan.pricing_source == "mock" else "Kroger or Fry's pricing"
     remaining_budget = request.weekly_budget - plan.estimated_total_cost
     weekly_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in plan.meals)
@@ -270,6 +286,10 @@ def render_meal_plan(request: PlannerRequest, planner: WeeklyMealPlanner, pricin
 
     st.divider()
     st.subheader("Planner Notes")
+    if st.session_state.get("plan_feedback"):
+        st.success(st.session_state["plan_feedback"])
+    if st.session_state.get("plan_error"):
+        st.error(st.session_state["plan_error"])
     if pricing_context.note or plan.notes:
         notes_container = st.container(border=True)
         with notes_container:
@@ -343,6 +363,21 @@ def render_meal_plan(request: PlannerRequest, planner: WeeklyMealPlanner, pricin
                         f"{meal.recipe.estimated_calories_per_serving * meal.scaled_servings:,}",
                     )
                     st.caption(f"Estimated calories per serving: {meal.recipe.estimated_calories_per_serving:,}")
+                    replace_button_key = f"replace-{meal.day}-{meal.slot}-{meal.recipe.recipe_id}"
+                    if st.button("Replace Meal", key=replace_button_key, use_container_width=True):
+                        try:
+                            updated_plan = planner.replace_meal(request, plan, meal.day, meal.slot)
+                            st.session_state["current_plan"] = updated_plan
+                            st.session_state["current_request"] = request
+                            st.session_state["plan_feedback"] = (
+                                f"Updated {day_name(meal.day)} {slot_label(request.meals_per_day, meal.slot).lower()}."
+                            )
+                            st.session_state["plan_error"] = ""
+                            st.rerun()
+                        except PlannerError as exc:
+                            st.session_state["plan_error"] = str(exc)
+                            st.session_state["plan_feedback"] = ""
+                            st.rerun()
 
                 with st.expander(f"Ingredients and steps for {meal.recipe.title}"):
                     scale = meal.scaled_servings / meal.recipe.base_servings
@@ -393,6 +428,10 @@ with st.container(border=True):
         st.write("")
         if st.button("Apply Preset", use_container_width=True):
             apply_preset(preset_name)
+            st.session_state["current_plan"] = None
+            st.session_state["current_request"] = None
+            st.session_state["plan_feedback"] = ""
+            st.session_state["plan_error"] = ""
             st.rerun()
     with target_col:
         calorie_target_range = st.slider(
@@ -570,19 +609,14 @@ if submitted:
         daily_calorie_target_max=st.session_state["calorie_target_max_input"],
         variety_preference=normalize_name(variety_preference),
     )
-    pricing_context = build_pricing_context(
-        pricing_mode=request.pricing_mode,
-        zip_code=request.zip_code,
-        store_location_id=request.store_location_id,
-    )
-    planner = WeeklyMealPlanner(
-        grocery_provider=pricing_context.provider,
-        pricing_source=pricing_context.pricing_source,
-        selected_store=pricing_context.selected_store,
-    )
+    planner, pricing_context = build_planner_and_context(request)
 
     try:
-        render_meal_plan(request, planner, pricing_context)
+        plan = planner.create_plan(request)
+        st.session_state["current_request"] = request
+        st.session_state["current_plan"] = plan
+        st.session_state["plan_feedback"] = ""
+        st.session_state["plan_error"] = ""
     except PlannerError as exc:
         headline, likely_causes = diagnose_plan_failure(planner, request)
         st.error(headline)
@@ -600,3 +634,9 @@ else:
         "Pick a preset or enter your own constraints, then generate a plan. The planner remains deterministic for "
         "the same settings, and calories now influence selection rather than acting as display-only reporting."
     )
+
+stored_request = st.session_state.get("current_request")
+stored_plan = st.session_state.get("current_plan")
+if stored_request is not None and stored_plan is not None:
+    planner, pricing_context = build_planner_and_context(stored_request)
+    render_meal_plan(stored_request, stored_plan, planner, pricing_context)
