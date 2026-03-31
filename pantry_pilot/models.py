@@ -59,6 +59,9 @@ class PlannerRequest:
     zip_code: str = ""
     pricing_mode: str = "mock"
     store_location_id: str = ""
+    daily_calorie_target_min: int = 1600
+    daily_calorie_target_max: int = 2200
+    variety_preference: str = "balanced"
 
 
 @dataclass(frozen=True)

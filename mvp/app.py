@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import streamlit as st
 
 from pantry_pilot.models import PlannerRequest
@@ -24,6 +26,7 @@ FIELD_DEFAULTS = {
     "pricing_mode_input": "Mock pricing",
     "calorie_target_min_input": 1600,
     "calorie_target_max_input": 2200,
+    "variety_preference_input": "Balanced",
 }
 
 PRESET_SCENARIOS = {
@@ -40,6 +43,7 @@ PRESET_SCENARIOS = {
         "pricing_mode_input": "Mock pricing",
         "calorie_target_min_input": 1800,
         "calorie_target_max_input": 2300,
+        "variety_preference_input": "Balanced",
     },
     "Vegetarian Budget Week": {
         "weekly_budget_input": 75.0,
@@ -54,6 +58,7 @@ PRESET_SCENARIOS = {
         "pricing_mode_input": "Mock pricing",
         "calorie_target_min_input": 1700,
         "calorie_target_max_input": 2200,
+        "variety_preference_input": "High",
     },
     "Pantry-First Week": {
         "weekly_budget_input": 60.0,
@@ -68,6 +73,7 @@ PRESET_SCENARIOS = {
         "pricing_mode_input": "Mock pricing",
         "calorie_target_min_input": 1700,
         "calorie_target_max_input": 2300,
+        "variety_preference_input": "Low",
     },
     "Quick Prep Week": {
         "weekly_budget_input": 95.0,
@@ -82,6 +88,7 @@ PRESET_SCENARIOS = {
         "pricing_mode_input": "Mock pricing",
         "calorie_target_min_input": 1800,
         "calorie_target_max_input": 2400,
+        "variety_preference_input": "High",
     },
 }
 
@@ -111,23 +118,155 @@ def calorie_status_label(daily_calories: int, minimum: int, maximum: int) -> tup
     return "Within target", "Daily calories are within the selected target range."
 
 
-def render_meal_plan(request: PlannerRequest, calorie_target_min: int, calorie_target_max: int) -> None:
-    pricing_context = build_pricing_context(
-        pricing_mode=request.pricing_mode,
-        zip_code=request.zip_code,
-        store_location_id=request.store_location_id,
+def format_calorie_target(minimum: int, maximum: int) -> str:
+    return f"{minimum:,} to {maximum:,} calories per day"
+
+
+def validate_csv_field(raw_value: str, label: str) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+    stripped = raw_value.strip()
+    if not stripped:
+        return errors, warnings
+    if ";" in stripped and "," not in stripped:
+        errors.append(f"{label} must use commas, not semicolons.")
+    if stripped.startswith(",") or stripped.endswith(",") or ",," in stripped:
+        warnings.append(f"{label} has blank entries. PantryPilot will ignore empty items.")
+    if stripped and not parse_csv_list(raw_value):
+        errors.append(f"{label} did not contain any valid comma-separated items.")
+    return errors, warnings
+
+
+def validate_request_inputs(
+    weekly_budget: float,
+    max_prep_time: int,
+    meals_per_day: int,
+    calorie_target_min: int,
+    calorie_target_max: int,
+    csv_inputs: dict[str, str],
+) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    if weekly_budget <= 0:
+        errors.append("Weekly budget must be greater than $0.")
+    elif weekly_budget < 25:
+        warnings.append("The weekly budget is very low. A full 7-day plan may not fit.")
+
+    if max_prep_time < 10 or max_prep_time > 180:
+        errors.append("Max prep time must stay between 10 and 180 minutes.")
+    elif max_prep_time <= 15:
+        warnings.append("Very short prep limits can leave too few recipes to plan a full week.")
+
+    if calorie_target_min >= calorie_target_max:
+        errors.append("Daily calorie target minimum must be lower than the maximum.")
+    if calorie_target_max < meals_per_day * 250:
+        errors.append(
+            f"The calorie target is too low for {meals_per_day} meals per day. Increase the daily maximum or reduce meals per day."
+        )
+    if calorie_target_min > meals_per_day * 1400:
+        warnings.append("The calorie target is unusually high for the selected meals per day.")
+    if calorie_target_max - calorie_target_min < meals_per_day * 150:
+        warnings.append("The calorie target range is narrow. Planning may fail unless you loosen other constraints.")
+
+    for label, raw_value in csv_inputs.items():
+        field_errors, field_warnings = validate_csv_field(raw_value, label)
+        errors.extend(field_errors)
+        warnings.extend(field_warnings)
+
+    return errors, warnings
+
+
+def diagnose_no_match_constraints(planner: WeeklyMealPlanner, request: PlannerRequest) -> list[str]:
+    causes: list[str] = []
+    if request.allergies or request.diet_restrictions or request.excluded_ingredients:
+        relaxed_safety_request = replace(
+            request,
+            allergies=(),
+            diet_restrictions=(),
+            excluded_ingredients=(),
+        )
+        if planner.filter_recipes(relaxed_safety_request):
+            causes.append("Allergy, diet, or excluded-ingredient filters leave too few safe recipes.")
+    if request.cuisine_preferences and planner.filter_recipes(replace(request, cuisine_preferences=())):
+        causes.append("Cuisine preferences are narrowing the recipe pool too far.")
+    if request.max_prep_time_minutes < 30 and planner.filter_recipes(replace(request, max_prep_time_minutes=180)):
+        causes.append("The prep-time limit is too strict for the current filters.")
+    if not causes:
+        causes.append("Too few recipes match the current safety and planning constraints.")
+    return causes
+
+
+def diagnose_plan_failure(planner: WeeklyMealPlanner, request: PlannerRequest) -> tuple[str, list[str]]:
+    filtered_recipes = planner.filter_recipes(request)
+    if not filtered_recipes:
+        return (
+            "No safe recipes matched the current settings.",
+            diagnose_no_match_constraints(planner, request),
+        )
+
+    causes: list[str] = []
+    if len(filtered_recipes) < request.meals_per_day * 3:
+        causes.append(
+            f"Only {len(filtered_recipes)} recipes match the current filters, which is a small pool for {request.meals_per_day} meals per day."
+        )
+    if request.daily_calorie_target_max - request.daily_calorie_target_min < request.meals_per_day * 150:
+        causes.append("The selected calorie target range is narrow for the requested number of meals.")
+    if request.variety_preference != "low":
+        try:
+            planner.create_plan(replace(request, variety_preference="low"))
+            causes.append("Variety settings are limiting repeats. Switching to Low variety would open more feasible plans.")
+        except PlannerError:
+            pass
+    try:
+        planner.create_plan(
+            replace(
+                request,
+                daily_calorie_target_min=1200,
+                daily_calorie_target_max=3500,
+            )
+        )
+        causes.append("The calorie target range is restrictive enough to block an otherwise feasible plan.")
+    except PlannerError:
+        pass
+    try:
+        planner.create_plan(
+            replace(
+                request,
+                cuisine_preferences=(),
+                diet_restrictions=(),
+                excluded_ingredients=(),
+                max_prep_time_minutes=180,
+            )
+        )
+        causes.append("Cuisine, diet, exclusion, or prep-time filters are tighter than the current dataset can support.")
+    except PlannerError:
+        pass
+    try:
+        planner.create_plan(replace(request, weekly_budget=max(request.weekly_budget + 25.0, request.weekly_budget * 1.5)))
+        causes.append("The weekly budget is likely too low for the selected constraints and package-based pricing.")
+    except PlannerError:
+        pass
+
+    if not causes:
+        causes.append("The current mix of budget, calories, and recipe filters is too restrictive for a 7-day plan.")
+    return (
+        "PantryPilot could not build a full week from the current settings.",
+        causes,
     )
-    planner = WeeklyMealPlanner(
-        grocery_provider=pricing_context.provider,
-        pricing_source=pricing_context.pricing_source,
-        selected_store=pricing_context.selected_store,
-    )
+
+
+def render_meal_plan(request: PlannerRequest, planner: WeeklyMealPlanner, pricing_context) -> None:
     plan = planner.create_plan(request)
 
     pricing_header = "Mock pricing" if plan.pricing_source == "mock" else "Kroger or Fry's pricing"
     remaining_budget = request.weekly_budget - plan.estimated_total_cost
     weekly_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in plan.meals)
     average_daily_calories = round(weekly_calories / 7)
+    calorie_target_text = format_calorie_target(
+        request.daily_calorie_target_min,
+        request.daily_calorie_target_max,
+    )
 
     st.divider()
     st.subheader("Planner Notes")
@@ -143,23 +282,25 @@ def render_meal_plan(request: PlannerRequest, calorie_target_min: int, calorie_t
 
     st.divider()
     st.subheader("Budget And Calories")
+    top_metrics = st.columns(3)
+    top_metrics[0].metric("Weekly Budget", f"${request.weekly_budget:.2f}")
+    top_metrics[1].metric("Estimated Spend", f"${plan.estimated_total_cost:.2f}")
+    top_metrics[2].metric("Remaining", f"${remaining_budget:.2f}")
+    calorie_metrics = st.columns(2)
+    calorie_metrics[0].metric("Weekly Calories", f"{weekly_calories:,}")
+    calorie_metrics[1].metric("Average Per Day", f"{average_daily_calories:,}")
     summary_left, summary_right = st.columns((3, 2))
     with summary_left:
-        metric_cols = st.columns(5)
-        metric_cols[0].metric("Weekly Budget", f"${request.weekly_budget:.2f}")
-        metric_cols[1].metric("Estimated Spend", f"${plan.estimated_total_cost:.2f}")
-        metric_cols[2].metric("Remaining", f"${remaining_budget:.2f}")
-        metric_cols[3].metric("Weekly Calories", f"{weekly_calories:,}")
-        metric_cols[4].metric("Avg / Day", f"{average_daily_calories:,}")
         st.caption(f"Pricing source: {pricing_header}")
         if plan.selected_store:
             st.caption(f"Store: {plan.selected_store}")
+        st.caption(f"Variety preference: {request.variety_preference.title()}")
     with summary_right:
         budget_status = "Within budget" if remaining_budget >= 0 else "Over budget"
         with st.container(border=True):
             st.markdown(f"**{budget_status}**")
             st.write("The shopping list estimate reflects pantry subtraction and package-based purchase costs.")
-            st.caption(f"Daily calorie target: {calorie_target_min:,} to {calorie_target_max:,}")
+            st.markdown(f"Daily calorie target: **{calorie_target_text}**")
 
     st.divider()
     st.subheader("Weekly Plan")
@@ -167,14 +308,18 @@ def render_meal_plan(request: PlannerRequest, calorie_target_min: int, calorie_t
     for day in range(1, 8):
         day_meals = [meal for meal in plan.meals if meal.day == day]
         daily_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in day_meals)
-        day_status, day_status_help = calorie_status_label(daily_calories, calorie_target_min, calorie_target_max)
+        day_status, day_status_help = calorie_status_label(
+            daily_calories,
+            request.daily_calorie_target_min,
+            request.daily_calorie_target_max,
+        )
         with st.container(border=True):
             day_header, day_metrics = st.columns((2, 3))
             day_header.markdown(f"### {day_name(day)}")
-            metrics_row = day_metrics.columns(3)
-            metrics_row[0].metric("Daily Calories", f"{daily_calories:,}")
-            metrics_row[1].metric("Target Range", f"{calorie_target_min:,} - {calorie_target_max:,}")
-            metrics_row[2].metric("Status", day_status)
+            day_metric_cols = day_metrics.columns((1, 2, 2))
+            day_metric_cols[0].metric("Daily Calories", f"{daily_calories:,}")
+            day_metric_cols[1].markdown(f"**Target Range**  \n{calorie_target_text}")
+            day_metric_cols[2].markdown(f"**Status**  \n{day_status}")
             st.caption(day_status_help)
 
             for meal in day_meals:
@@ -196,8 +341,8 @@ def render_meal_plan(request: PlannerRequest, calorie_target_min: int, calorie_t
                     calorie_col.metric(
                         "Calories",
                         f"{meal.recipe.estimated_calories_per_serving * meal.scaled_servings:,}",
-                        f"{meal.recipe.estimated_calories_per_serving} per serving",
                     )
+                    st.caption(f"Estimated calories per serving: {meal.recipe.estimated_calories_per_serving:,}")
 
                 with st.expander(f"Ingredients and steps for {meal.recipe.title}"):
                     scale = meal.scaled_servings / meal.recipe.base_servings
@@ -265,6 +410,7 @@ with st.container(border=True):
             f"Selected target: {st.session_state['calorie_target_min_input']:,} to "
             f"{st.session_state['calorie_target_max_input']:,} calories per day"
         )
+        st.caption("The planner now uses this range to favor days that land closer to the target.")
 
 st.subheader("Pricing")
 pricing_mode = st.radio(
@@ -362,17 +508,51 @@ with st.form("weekly-planner-form"):
             help="Comma-separated ingredients assumed to already be on hand.",
         )
     with calorie_col:
-        st.markdown("**Calorie Target**")
-        st.write(
-            f"Daily target range: **{st.session_state['calorie_target_min_input']:,} to "
-            f"{st.session_state['calorie_target_max_input']:,} calories**"
+        st.markdown("**Calories And Variety**")
+        st.markdown(
+            "Daily target range: **"
+            + format_calorie_target(
+                st.session_state["calorie_target_min_input"],
+                st.session_state["calorie_target_max_input"],
+            )
+            + "**"
         )
-        st.caption("The planner reports against this range after generation. It does not optimize for calories yet.")
+        variety_preference = st.selectbox(
+            "Variety preference",
+            ("Low", "Balanced", "High"),
+            key="variety_preference_input",
+            help="Higher variety makes repeats less likely, but still stays deterministic for the same settings.",
+        )
+        st.caption("Calories and variety both influence selection. Allergy filtering and budget checks still apply first.")
 
     submitted = st.form_submit_button("Create 7-day plan", use_container_width=True)
 
 
 if submitted:
+    validation_errors, validation_warnings = validate_request_inputs(
+        weekly_budget=float(weekly_budget),
+        max_prep_time=int(max_prep_time),
+        meals_per_day=int(meals_per_day),
+        calorie_target_min=st.session_state["calorie_target_min_input"],
+        calorie_target_max=st.session_state["calorie_target_max_input"],
+        csv_inputs={
+            "Cuisine preferences": cuisine_preferences,
+            "Diet restrictions": diet_restrictions,
+            "Allergies": allergies,
+            "Excluded ingredients": excluded_ingredients,
+            "Pantry staples": pantry_staples,
+        },
+    )
+
+    for warning in validation_warnings:
+        st.warning(warning)
+
+    if validation_errors:
+        st.error("Please fix the input issues before generating a plan.")
+        for error_message in validation_errors:
+            st.write(f"- {error_message}")
+        st.stop()
+
     request = PlannerRequest(
         weekly_budget=float(weekly_budget),
         servings=int(servings),
@@ -386,19 +566,37 @@ if submitted:
         zip_code=zip_code.strip(),
         pricing_mode=normalize_name(pricing_mode),
         store_location_id=location_options.get(selected_store_label, ""),
+        daily_calorie_target_min=st.session_state["calorie_target_min_input"],
+        daily_calorie_target_max=st.session_state["calorie_target_max_input"],
+        variety_preference=normalize_name(variety_preference),
+    )
+    pricing_context = build_pricing_context(
+        pricing_mode=request.pricing_mode,
+        zip_code=request.zip_code,
+        store_location_id=request.store_location_id,
+    )
+    planner = WeeklyMealPlanner(
+        grocery_provider=pricing_context.provider,
+        pricing_source=pricing_context.pricing_source,
+        selected_store=pricing_context.selected_store,
     )
 
     try:
-        render_meal_plan(
-            request,
-            calorie_target_min=st.session_state["calorie_target_min_input"],
-            calorie_target_max=st.session_state["calorie_target_max_input"],
-        )
+        render_meal_plan(request, planner, pricing_context)
     except PlannerError as exc:
-        st.error(str(exc))
-        st.info("Try increasing the budget, loosening cuisine filters, or reducing meals per day.")
+        headline, likely_causes = diagnose_plan_failure(planner, request)
+        st.error(headline)
+        st.caption(str(exc))
+        with st.container(border=True):
+            st.markdown("**Likely Causes**")
+            for cause in likely_causes:
+                st.write(f"- {cause}")
+        st.info(
+            "Try increasing the budget, widening the calorie target, loosening cuisine or diet filters, "
+            "or reducing meals per day."
+        )
 else:
     st.caption(
-        "Pick a preset or enter your own constraints, then generate a plan. The planner remains deterministic, "
-        "and calorie targets are reported after generation rather than optimized during planning."
+        "Pick a preset or enter your own constraints, then generate a plan. The planner remains deterministic for "
+        "the same settings, and calories now influence selection rather than acting as display-only reporting."
     )
