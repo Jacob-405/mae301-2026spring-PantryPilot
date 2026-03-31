@@ -62,6 +62,10 @@ class Phase3RecipeDataTests(unittest.TestCase):
         recipe_ids = [recipe.recipe_id for recipe in sample_recipes()]
         self.assertEqual(len(recipe_ids), len(set(recipe_ids)))
 
+    def test_recipe_calorie_estimates_are_present_and_positive(self) -> None:
+        for recipe in sample_recipes():
+            self.assertGreater(recipe.estimated_calories_per_serving, 0)
+
     def test_diet_derivation_is_conservative_for_unknown_metadata(self) -> None:
         recipes = {recipe.title: recipe for recipe in sample_recipes()}
         mystery_curry = recipes["Mystery Curry"]

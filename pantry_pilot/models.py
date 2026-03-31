@@ -16,6 +16,7 @@ class Recipe:
     title: str
     cuisine: str
     base_servings: int
+    estimated_calories_per_serving: int
     prep_time_minutes: int
     meal_types: tuple[str, ...]
     diet_tags: frozenset[str]

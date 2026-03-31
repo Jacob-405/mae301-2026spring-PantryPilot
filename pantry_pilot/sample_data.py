@@ -63,6 +63,7 @@ REQUIRED_RECIPE_FIELDS = (
     "title",
     "cuisine",
     "base_servings",
+    "estimated_calories_per_serving",
     "prep_time_minutes",
     "meal_types",
     "ingredients",
@@ -80,6 +81,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Avocado Toast",
         "cuisine": "american",
         "base_servings": 2,
+        "estimated_calories_per_serving": 330,
         "prep_time_minutes": 10,
         "meal_types": ("breakfast", "lunch"),
         "ingredients": (
@@ -97,6 +99,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Banana Yogurt Oat Cup",
         "cuisine": "american",
         "base_servings": 2,
+        "estimated_calories_per_serving": 310,
         "prep_time_minutes": 8,
         "meal_types": ("breakfast",),
         "ingredients": (
@@ -115,6 +118,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Berry Yogurt Parfait",
         "cuisine": "american",
         "base_servings": 2,
+        "estimated_calories_per_serving": 360,
         "prep_time_minutes": 8,
         "meal_types": ("breakfast",),
         "ingredients": (
@@ -132,6 +136,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Black Bean Corn Salad",
         "cuisine": "mexican",
         "base_servings": 4,
+        "estimated_calories_per_serving": 280,
         "prep_time_minutes": 15,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -150,6 +155,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Black Bean Taco Bowls",
         "cuisine": "mexican",
         "base_servings": 4,
+        "estimated_calories_per_serving": 430,
         "prep_time_minutes": 25,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -169,6 +175,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Broccoli Cheddar Rice Bowl",
         "cuisine": "american",
         "base_servings": 4,
+        "estimated_calories_per_serving": 420,
         "prep_time_minutes": 25,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -187,6 +194,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Broccoli Garlic Rice",
         "cuisine": "american",
         "base_servings": 4,
+        "estimated_calories_per_serving": 250,
         "prep_time_minutes": 20,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -205,6 +213,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Chicken Rice Skillet",
         "cuisine": "american",
         "base_servings": 4,
+        "estimated_calories_per_serving": 480,
         "prep_time_minutes": 35,
         "meal_types": ("dinner",),
         "extra_diet_tags": ("high-protein",),
@@ -224,6 +233,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Chicken Tomato Pasta",
         "cuisine": "italian",
         "base_servings": 4,
+        "estimated_calories_per_serving": 520,
         "prep_time_minutes": 30,
         "meal_types": ("dinner",),
         "extra_diet_tags": ("high-protein",),
@@ -243,6 +253,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Chickpea Salsa Rice Skillet",
         "cuisine": "mexican",
         "base_servings": 4,
+        "estimated_calories_per_serving": 390,
         "prep_time_minutes": 20,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -261,6 +272,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Chickpea Tomato Skillet",
         "cuisine": "mediterranean",
         "base_servings": 4,
+        "estimated_calories_per_serving": 260,
         "prep_time_minutes": 20,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -279,6 +291,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Cinnamon Banana Oatmeal",
         "cuisine": "american",
         "base_servings": 2,
+        "estimated_calories_per_serving": 280,
         "prep_time_minutes": 12,
         "meal_types": ("breakfast",),
         "ingredients": (
@@ -296,6 +309,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Cucumber Tomato Feta Toast",
         "cuisine": "mediterranean",
         "base_servings": 2,
+        "estimated_calories_per_serving": 340,
         "prep_time_minutes": 10,
         "meal_types": ("breakfast", "lunch"),
         "ingredients": (
@@ -314,6 +328,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Egg Fried Rice Bowl",
         "cuisine": "asian",
         "base_servings": 4,
+        "estimated_calories_per_serving": 410,
         "prep_time_minutes": 20,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -332,6 +347,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Feta Rice Stuffed Peppers",
         "cuisine": "mediterranean",
         "base_servings": 4,
+        "estimated_calories_per_serving": 360,
         "prep_time_minutes": 35,
         "meal_types": ("dinner",),
         "ingredients": (
@@ -350,6 +366,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Garlic Tomato Pasta",
         "cuisine": "italian",
         "base_servings": 4,
+        "estimated_calories_per_serving": 390,
         "prep_time_minutes": 25,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -368,6 +385,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Greek Chickpea Salad",
         "cuisine": "mediterranean",
         "base_servings": 4,
+        "estimated_calories_per_serving": 370,
         "prep_time_minutes": 15,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -387,6 +405,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Lemon Chickpea Pasta",
         "cuisine": "mediterranean",
         "base_servings": 4,
+        "estimated_calories_per_serving": 410,
         "prep_time_minutes": 25,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -405,6 +424,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Lemon Lentil Rice Bowl",
         "cuisine": "mediterranean",
         "base_servings": 4,
+        "estimated_calories_per_serving": 330,
         "prep_time_minutes": 30,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -423,6 +443,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Lentil Salsa Rice Bowl",
         "cuisine": "mexican",
         "base_servings": 4,
+        "estimated_calories_per_serving": 340,
         "prep_time_minutes": 30,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -441,6 +462,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Lentil Tomato Soup",
         "cuisine": "mediterranean",
         "base_servings": 4,
+        "estimated_calories_per_serving": 290,
         "prep_time_minutes": 30,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -461,6 +483,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Mediterranean Rice Bowl",
         "cuisine": "mediterranean",
         "base_servings": 4,
+        "estimated_calories_per_serving": 360,
         "prep_time_minutes": 25,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -480,6 +503,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Mystery Curry",
         "cuisine": "indian",
         "base_servings": 4,
+        "estimated_calories_per_serving": 420,
         "prep_time_minutes": 30,
         "meal_types": ("dinner",),
         "ingredients": (
@@ -497,6 +521,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Overnight Oats Bowl",
         "cuisine": "american",
         "base_servings": 2,
+        "estimated_calories_per_serving": 430,
         "prep_time_minutes": 10,
         "meal_types": ("breakfast",),
         "ingredients": (
@@ -515,6 +540,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Parmesan Broccoli Pasta",
         "cuisine": "italian",
         "base_servings": 4,
+        "estimated_calories_per_serving": 440,
         "prep_time_minutes": 25,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -533,6 +559,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Pasta Primavera",
         "cuisine": "italian",
         "base_servings": 4,
+        "estimated_calories_per_serving": 430,
         "prep_time_minutes": 30,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -552,6 +579,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Peanut Noodles",
         "cuisine": "asian",
         "base_servings": 4,
+        "estimated_calories_per_serving": 500,
         "prep_time_minutes": 20,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -570,6 +598,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Savory Chickpea Toast",
         "cuisine": "mediterranean",
         "base_servings": 2,
+        "estimated_calories_per_serving": 320,
         "prep_time_minutes": 12,
         "meal_types": ("breakfast", "lunch"),
         "ingredients": (
@@ -588,6 +617,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Spinach Tomato Egg Toast",
         "cuisine": "american",
         "base_servings": 2,
+        "estimated_calories_per_serving": 360,
         "prep_time_minutes": 15,
         "meal_types": ("breakfast",),
         "ingredients": (
@@ -606,6 +636,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Tofu Stir-Fry",
         "cuisine": "asian",
         "base_servings": 4,
+        "estimated_calories_per_serving": 350,
         "prep_time_minutes": 25,
         "meal_types": ("lunch", "dinner"),
         "ingredients": (
@@ -625,6 +656,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Tomato Avocado Toast",
         "cuisine": "american",
         "base_servings": 2,
+        "estimated_calories_per_serving": 350,
         "prep_time_minutes": 10,
         "meal_types": ("breakfast", "lunch"),
         "ingredients": (
@@ -642,6 +674,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Turkey Chili",
         "cuisine": "american",
         "base_servings": 4,
+        "estimated_calories_per_serving": 390,
         "prep_time_minutes": 40,
         "meal_types": ("dinner",),
         "extra_diet_tags": ("high-protein",),
@@ -662,6 +695,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Turkey Taco Rice Skillet",
         "cuisine": "mexican",
         "base_servings": 4,
+        "estimated_calories_per_serving": 450,
         "prep_time_minutes": 30,
         "meal_types": ("dinner",),
         "extra_diet_tags": ("high-protein",),
@@ -681,6 +715,7 @@ RAW_RECIPES: tuple[dict, ...] = (
         "title": "Veggie Egg Scramble",
         "cuisine": "american",
         "base_servings": 2,
+        "estimated_calories_per_serving": 330,
         "prep_time_minutes": 15,
         "meal_types": ("breakfast",),
         "ingredients": (
@@ -711,6 +746,7 @@ def _build_recipe(record: dict) -> Recipe:
         title=record["title"],
         cuisine=normalize_name(record["cuisine"]),
         base_servings=int(record["base_servings"]),
+        estimated_calories_per_serving=int(record["estimated_calories_per_serving"]),
         prep_time_minutes=int(record["prep_time_minutes"]),
         meal_types=tuple(normalize_name(value) for value in record["meal_types"]),
         diet_tags=_derive_diet_tags(canonical_names, record.get("extra_diet_tags", ())),

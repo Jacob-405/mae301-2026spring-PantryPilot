@@ -13,6 +13,7 @@ class PackageCostRecipeProvider(LocalRecipeProvider):
                 title="Tiny Spice Bowl",
                 cuisine="american",
                 base_servings=2,
+                estimated_calories_per_serving=180,
                 prep_time_minutes=10,
                 meal_types=("dinner",),
                 diet_tags=frozenset({"vegan", "gluten-free"}),

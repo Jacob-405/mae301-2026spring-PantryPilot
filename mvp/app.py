@@ -31,6 +31,7 @@ def render_meal_plan(request: PlannerRequest) -> None:
 
     pricing_header = "Mock pricing" if plan.pricing_source == "mock" else "Kroger or Fry's pricing"
     remaining_budget = request.weekly_budget - plan.estimated_total_cost
+    weekly_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in plan.meals)
 
     st.divider()
     st.subheader("Planner Notes")
@@ -48,10 +49,11 @@ def render_meal_plan(request: PlannerRequest) -> None:
     st.subheader("Budget Summary")
     summary_left, summary_right = st.columns((2, 1))
     with summary_left:
-        metric_cols = st.columns(3)
+        metric_cols = st.columns(4)
         metric_cols[0].metric("Weekly Budget", f"${request.weekly_budget:.2f}")
         metric_cols[1].metric("Estimated Spend", f"${plan.estimated_total_cost:.2f}")
         metric_cols[2].metric("Remaining", f"${remaining_budget:.2f}")
+        metric_cols[3].metric("Weekly Calories", f"{weekly_calories:,}")
         st.caption(f"Pricing source: {pricing_header}")
         if plan.selected_store:
             st.caption(f"Store: {plan.selected_store}")
@@ -70,10 +72,11 @@ def render_meal_plan(request: PlannerRequest) -> None:
     st.caption("Each meal shows the recipe, timing, and estimated added cost for that selection.")
     for day in range(1, 8):
         day_meals = [meal for meal in plan.meals if meal.day == day]
+        daily_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in day_meals)
         with st.container(border=True):
             day_header, day_meta = st.columns((3, 1))
             day_header.markdown(f"### {day_name(day)}")
-            day_meta.caption(pricing_header)
+            day_meta.metric("Daily Calories", f"{daily_calories:,}")
             for meal in day_meals:
                 meal_title, meal_stats = st.columns((3, 2))
                 with meal_title:
@@ -87,9 +90,14 @@ def render_meal_plan(request: PlannerRequest) -> None:
                         + ", ".join(sorted(meal.recipe.diet_tags))
                     )
                 with meal_stats:
-                    prep_col, cost_col = st.columns(2)
+                    prep_col, cost_col, calorie_col = st.columns(3)
                     prep_col.metric("Prep Time", f"{meal.recipe.prep_time_minutes} min")
                     cost_col.metric("Meal Cost", f"${meal.incremental_cost:.2f}")
+                    calorie_col.metric(
+                        "Calories",
+                        f"{meal.recipe.estimated_calories_per_serving * meal.scaled_servings:,}",
+                        f"{meal.recipe.estimated_calories_per_serving} per serving",
+                    )
 
                 with st.expander(f"Ingredients and steps for {meal.recipe.title}"):
                     scale = meal.scaled_servings / meal.recipe.base_servings
