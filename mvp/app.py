@@ -1,4 +1,6 @@
 from dataclasses import replace
+import csv
+import io
 
 import streamlit as st
 
@@ -154,6 +156,105 @@ def format_calorie_target(minimum: int, maximum: int) -> str:
 
 def meal_structure_for_label(label: str) -> tuple[str, ...]:
     return MEAL_STRUCTURE_OPTIONS[label]
+
+
+def meal_repeat_label(request: PlannerRequest, plan, meal) -> tuple[str, str] | None:
+    prior_matches = [
+        prior_meal
+        for prior_meal in plan.meals
+        if (prior_meal.day, prior_meal.slot) < (meal.day, meal.slot)
+        and prior_meal.recipe.recipe_id == meal.recipe.recipe_id
+    ]
+    if not prior_matches:
+        return None
+    if normalize_name(request.leftovers_mode) != "off":
+        return "Leftovers", "Cook once, eat again"
+    return "Repeat meal", "This recipe appeared earlier in the week"
+
+
+def build_plan_text_export(request: PlannerRequest, plan) -> str:
+    lines: list[str] = [
+        "PantryPilot Weekly Plan",
+        "",
+        f"Budget: ${request.weekly_budget:.2f}",
+        f"Estimated spend: ${plan.estimated_total_cost:.2f}",
+        f"Remaining budget: ${request.weekly_budget - plan.estimated_total_cost:.2f}",
+    ]
+    weekly_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in plan.meals)
+    lines.extend(
+        [
+            f"Weekly calories: {weekly_calories:,}",
+            f"Average calories per day: {round(weekly_calories / 7):,}",
+            f"Calorie target: {format_calorie_target(request.daily_calorie_target_min, request.daily_calorie_target_max)}",
+            f"Meal structure: {' + '.join(value.title() for value in request.meal_structure or ('meal',))}",
+            f"Variety preference: {request.variety_preference.title()}",
+            f"Leftovers mode: {request.leftovers_mode.title()}",
+            "",
+            "Weekly Plan",
+            "",
+        ]
+    )
+
+    for day in range(1, 8):
+        day_meals = [meal for meal in plan.meals if meal.day == day]
+        daily_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in day_meals)
+        day_status, _ = calorie_status_label(
+            daily_calories,
+            request.daily_calorie_target_min,
+            request.daily_calorie_target_max,
+        )
+        lines.append(f"{day_name(day)}")
+        lines.append(f"  Daily calories: {daily_calories:,} ({day_status})")
+        for meal in day_meals:
+            repeat_badge = meal_repeat_label(request, plan, meal)
+            repeat_suffix = ""
+            if repeat_badge is not None:
+                repeat_suffix = f" [{repeat_badge[0]}: {repeat_badge[1]}]"
+            lines.append(
+                "  "
+                + f"{slot_label(request.meals_per_day, meal.slot, request.meal_structure)}: "
+                + f"{meal.recipe.title} | {meal.recipe.prep_time_minutes} min | "
+                + f"${meal.incremental_cost:.2f} | "
+                + f"{meal.recipe.estimated_calories_per_serving * meal.scaled_servings:,} calories"
+                + repeat_suffix
+            )
+        lines.append("")
+
+    lines.extend(["Shopping List", ""])
+    for item in plan.shopping_list:
+        lines.append(
+            f"- {item.name}: need {item.quantity} {item.unit}, "
+            f"buy {item.purchased_quantity} {item.package_unit or item.unit}, "
+            f"packages {item.estimated_packages}, "
+            f"estimated cost {'N/A' if item.estimated_cost is None else f'${item.estimated_cost:.2f}'}"
+        )
+
+    if plan.notes:
+        lines.extend(["", "Planner Notes"])
+        for note in plan.notes:
+            lines.append(f"- {note}")
+
+    return "\n".join(lines)
+
+
+def build_shopping_list_csv(plan) -> str:
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(
+        ["Ingredient", "Amount Needed", "Amount Being Bought", "Package Count", "Estimated Cost", "Price Source"]
+    )
+    for item in plan.shopping_list:
+        writer.writerow(
+            [
+                item.name,
+                f"{item.quantity} {item.unit}",
+                "N/A" if item.purchased_quantity == 0 else f"{item.purchased_quantity} {item.package_unit}",
+                item.estimated_packages,
+                "" if item.estimated_cost is None else f"{item.estimated_cost:.2f}",
+                item.pricing_source,
+            ]
+        )
+    return output.getvalue()
 
 
 def validate_csv_field(raw_value: str, label: str) -> tuple[list[str], list[str]]:
@@ -341,6 +442,25 @@ def render_meal_plan(request: PlannerRequest, plan, planner: WeeklyMealPlanner, 
             st.markdown(f"Daily calorie target: **{calorie_target_text}**")
 
     st.divider()
+    st.subheader("Export")
+    export_text = build_plan_text_export(request, plan)
+    export_columns = st.columns(2)
+    export_columns[0].download_button(
+        "Download Weekly Plan (.txt)",
+        data=export_text,
+        file_name="pantrypilot_weekly_plan.txt",
+        mime="text/plain",
+        use_container_width=True,
+    )
+    export_columns[1].download_button(
+        "Download Shopping List (.csv)",
+        data=build_shopping_list_csv(plan),
+        file_name="pantrypilot_shopping_list.csv",
+        mime="text/csv",
+        use_container_width=True,
+    )
+
+    st.divider()
     st.subheader("Weekly Plan")
     st.caption("Each day shows meals, calorie totals, and whether the day lands inside the selected calorie target range.")
     for day in range(1, 8):
@@ -363,9 +483,12 @@ def render_meal_plan(request: PlannerRequest, plan, planner: WeeklyMealPlanner, 
             for meal in day_meals:
                 meal_title, meal_stats = st.columns((3, 2))
                 with meal_title:
+                    repeat_badge = meal_repeat_label(request, plan, meal)
                     st.markdown(
                         f"**{slot_label(request.meals_per_day, meal.slot, request.meal_structure)} {meal.slot}**: {meal.recipe.title}"
                     )
+                    if repeat_badge is not None:
+                        st.caption(f"{repeat_badge[0]}: {repeat_badge[1]}")
                     st.caption(
                         "Cuisine: "
                         + meal.recipe.cuisine.title()
