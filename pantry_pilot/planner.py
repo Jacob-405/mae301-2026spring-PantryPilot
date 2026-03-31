@@ -14,6 +14,36 @@ SLOT_LABELS = {
     2: ("breakfast", "dinner"),
     3: ("breakfast", "lunch", "dinner"),
 }
+LOW_SIGNAL_INGREDIENTS = frozenset(
+    {
+        "olive oil",
+        "garlic",
+        "onion",
+        "lemon",
+        "lime",
+        "vegetable broth",
+        "cinnamon",
+        "honey",
+    }
+)
+MEAL_STYLE_KEYWORDS = frozenset(
+    {
+        "bowl",
+        "salad",
+        "toast",
+        "soup",
+        "skillet",
+        "pasta",
+        "stir-fry",
+        "scramble",
+        "parfait",
+        "chili",
+        "curry",
+        "stuffed",
+        "fried",
+        "oatmeal",
+    }
+)
 
 
 @dataclass
@@ -30,6 +60,7 @@ class VarietyProfile:
     recent_repeat_penalty: float
     cuisine_repetition_penalty: float
     recent_cuisine_penalty: float
+    near_duplicate_penalty: float
     calorie_target_weight: float
     leftovers_bonus: float
 
@@ -291,6 +322,7 @@ class WeeklyMealPlanner:
             recent_repeat_count = self._recent_repeat_count(meals, recipe.title)
             cuisine_repeat_count = self._cuisine_count(meals, recipe.cuisine)
             recent_cuisine_count = self._recent_cuisine_count(meals, recipe.cuisine)
+            near_duplicate_penalty = self._near_duplicate_penalty(meals, recipe, day_number, slot_number)
             leftovers_score = self._leftovers_score(meals, recipe.title, slot_number)
             projected_day_calories = self._projected_day_calories(
                 all_candidates,
@@ -312,10 +344,12 @@ class WeeklyMealPlanner:
             effective_cost += recent_repeat_count * variety_profile.recent_repeat_penalty
             effective_cost += cuisine_repeat_count * variety_profile.cuisine_repetition_penalty
             effective_cost += recent_cuisine_count * variety_profile.recent_cuisine_penalty
+            effective_cost += near_duplicate_penalty * variety_profile.near_duplicate_penalty
             effective_cost += calorie_penalty * variety_profile.calorie_target_weight
             effective_cost -= leftovers_score * variety_profile.leftovers_bonus
             sort_key = (
                 round(effective_cost, 4),
+                round(near_duplicate_penalty, 4),
                 round(calorie_penalty, 4),
                 -leftovers_score,
                 -pantry_match_count,
@@ -389,6 +423,7 @@ class WeeklyMealPlanner:
                 recent_repeat_penalty=self.recent_repeat_penalty * 0.55,
                 cuisine_repetition_penalty=0.45,
                 recent_cuisine_penalty=0.2,
+                near_duplicate_penalty=0.7,
                 calorie_target_weight=0.85,
                 leftovers_bonus=0.55,
             )
@@ -400,6 +435,7 @@ class WeeklyMealPlanner:
                 recent_repeat_penalty=self.recent_repeat_penalty * 1.8,
                 cuisine_repetition_penalty=1.2,
                 recent_cuisine_penalty=0.8,
+                near_duplicate_penalty=1.5,
                 calorie_target_weight=1.15,
                 leftovers_bonus=0.15,
             )
@@ -411,6 +447,7 @@ class WeeklyMealPlanner:
                 recent_repeat_penalty=self.recent_repeat_penalty * 1.2,
                 cuisine_repetition_penalty=0.8,
                 recent_cuisine_penalty=0.45,
+                near_duplicate_penalty=1.05,
                 calorie_target_weight=1.0,
                 leftovers_bonus=0.35,
             )
@@ -426,6 +463,7 @@ class WeeklyMealPlanner:
                 recent_repeat_penalty=profile.recent_repeat_penalty * 0.6,
                 cuisine_repetition_penalty=profile.cuisine_repetition_penalty * 0.75,
                 recent_cuisine_penalty=profile.recent_cuisine_penalty * 0.8,
+                near_duplicate_penalty=profile.near_duplicate_penalty * 0.7,
                 calorie_target_weight=profile.calorie_target_weight,
                 leftovers_bonus=1.0,
             )
@@ -437,6 +475,7 @@ class WeeklyMealPlanner:
                 recent_repeat_penalty=profile.recent_repeat_penalty * 0.85,
                 cuisine_repetition_penalty=profile.cuisine_repetition_penalty * 0.9,
                 recent_cuisine_penalty=profile.recent_cuisine_penalty * 0.9,
+                near_duplicate_penalty=profile.near_duplicate_penalty * 0.85,
                 calorie_target_weight=profile.calorie_target_weight,
                 leftovers_bonus=0.65,
             )
@@ -534,6 +573,12 @@ class WeeklyMealPlanner:
             nearby_repeat_count = self._neighbor_recipe_count(fixed_meals, recipe.title, day_number, slot_number)
             cuisine_repeat_count = self._cuisine_count(fixed_meals, recipe.cuisine)
             nearby_cuisine_count = self._neighbor_cuisine_count(fixed_meals, recipe.cuisine, day_number, slot_number)
+            near_duplicate_penalty = self._near_duplicate_penalty(
+                fixed_meals,
+                recipe,
+                day_number,
+                slot_number,
+            )
             leftovers_score = self._leftovers_score(fixed_meals, recipe.title, slot_number)
             projected_day_calories = day_fixed_calories + self._meal_calories(recipe, request.servings)
             calorie_penalty = self._calorie_target_penalty(
@@ -548,10 +593,12 @@ class WeeklyMealPlanner:
             effective_cost += nearby_repeat_count * variety_profile.recent_repeat_penalty
             effective_cost += cuisine_repeat_count * variety_profile.cuisine_repetition_penalty
             effective_cost += nearby_cuisine_count * variety_profile.recent_cuisine_penalty
+            effective_cost += near_duplicate_penalty * variety_profile.near_duplicate_penalty
             effective_cost += calorie_penalty * variety_profile.calorie_target_weight
             effective_cost -= leftovers_score * variety_profile.leftovers_bonus
             sort_key = (
                 round(effective_cost, 4),
+                round(near_duplicate_penalty, 4),
                 round(calorie_penalty, 4),
                 -leftovers_score,
                 -pantry_match_count,
@@ -666,6 +713,56 @@ class WeeklyMealPlanner:
         slot_matches = self._slot_recipe_count(meals, recipe_title, slot_number)
         recent_matches = self._recent_repeat_count(meals, recipe_title)
         return (slot_matches * 2) + recent_matches
+
+    def _near_duplicate_penalty(
+        self,
+        meals: list[PlannedMeal],
+        recipe: Recipe,
+        day_number: int,
+        slot_number: int,
+    ) -> float:
+        target_index = self._meal_sequence_index(day_number, slot_number)
+        penalties: list[float] = []
+        for meal in meals:
+            similarity = self._recipe_similarity(recipe, meal.recipe)
+            if similarity <= 0:
+                continue
+            distance = abs(self._meal_sequence_index(meal.day, meal.slot) - target_index)
+            if distance <= 2:
+                penalties.append(similarity * 1.35)
+            else:
+                penalties.append(similarity)
+        if not penalties:
+            return 0.0
+        return max(penalties) + (sum(penalties) / len(penalties) * 0.2)
+
+    def _recipe_similarity(self, left: Recipe, right: Recipe) -> float:
+        if left.recipe_id == right.recipe_id:
+            return 0.0
+        similarity = 0.0
+        if normalize_name(left.cuisine) == normalize_name(right.cuisine):
+            similarity += 1.0
+        shared_core_ingredients = len(self._core_ingredient_names(left) & self._core_ingredient_names(right))
+        if shared_core_ingredients >= 3:
+            similarity += 1.6
+        elif shared_core_ingredients == 2:
+            similarity += 1.1
+        elif shared_core_ingredients == 1:
+            similarity += 0.45
+        if self._meal_style_markers(left) & self._meal_style_markers(right):
+            similarity += 0.9
+        return similarity
+
+    def _core_ingredient_names(self, recipe: Recipe) -> frozenset[str]:
+        canonical_names = {normalize_ingredient_name(item.name) for item in recipe.ingredients}
+        core_names = canonical_names - LOW_SIGNAL_INGREDIENTS
+        if core_names:
+            return frozenset(core_names)
+        return frozenset(canonical_names)
+
+    def _meal_style_markers(self, recipe: Recipe) -> frozenset[str]:
+        normalized_title = normalize_name(recipe.title)
+        return frozenset(keyword for keyword in MEAL_STYLE_KEYWORDS if keyword in normalized_title)
 
     def _neighbor_recipe_count(
         self,

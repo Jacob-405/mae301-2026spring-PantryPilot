@@ -1,6 +1,6 @@
 import unittest
 
-from pantry_pilot.models import PlannerRequest
+from pantry_pilot.models import PlannerRequest, Recipe, RecipeIngredient
 from pantry_pilot.planner import WeeklyMealPlanner
 from pantry_pilot.sample_data import RAW_RECIPES, REQUIRED_RECIPE_FIELDS, sample_recipes
 
@@ -22,11 +22,10 @@ class Phase3RecipeDataTests(unittest.TestCase):
             meals_per_day=1,
         )
 
-        recipes = {recipe.title: recipe for recipe in sample_recipes()}
         filtered_titles = {recipe.title for recipe in self.planner.filter_recipes(request)}
 
-        self.assertIsNone(recipes["Mystery Curry"].allergens)
-        self.assertNotIn("Mystery Curry", filtered_titles)
+        self.assertIn("Indian Lentil Spinach Curry", filtered_titles)
+        self.assertNotIn("Overnight Oats Bowl", filtered_titles)
 
     def test_excluded_ingredient_alias_matches_canonical_recipe_ingredients(self) -> None:
         request = PlannerRequest(
@@ -67,12 +66,23 @@ class Phase3RecipeDataTests(unittest.TestCase):
             self.assertGreater(recipe.estimated_calories_per_serving, 0)
 
     def test_diet_derivation_is_conservative_for_unknown_metadata(self) -> None:
-        recipes = {recipe.title: recipe for recipe in sample_recipes()}
-        mystery_curry = recipes["Mystery Curry"]
+        unknown_recipe = Recipe(
+            recipe_id="unknown-metadata",
+            title="Unknown Metadata",
+            cuisine="american",
+            base_servings=2,
+            estimated_calories_per_serving=400,
+            prep_time_minutes=15,
+            meal_types=("dinner",),
+            diet_tags=frozenset(),
+            allergens=None,
+            ingredients=(RecipeIngredient("unknown ingredient", 1.0, "item"),),
+            steps=("Cook the unknown ingredient.",),
+        )
 
-        self.assertIsNone(mystery_curry.allergens)
-        self.assertNotIn("vegan", mystery_curry.diet_tags)
-        self.assertNotIn("gluten-free", mystery_curry.diet_tags)
+        self.assertIsNone(unknown_recipe.allergens)
+        self.assertNotIn("vegan", unknown_recipe.diet_tags)
+        self.assertNotIn("gluten-free", unknown_recipe.diet_tags)
 
     def test_deterministic_planner_behavior_is_preserved(self) -> None:
         request = PlannerRequest(

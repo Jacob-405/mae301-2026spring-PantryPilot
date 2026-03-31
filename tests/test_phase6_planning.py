@@ -251,6 +251,66 @@ class MealStructureRecipeProvider(LocalRecipeProvider):
         )
 
 
+class NearDuplicateRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe(
+                recipe_id="chickpea-rice-bowl",
+                title="Chickpea Rice Bowl",
+                cuisine="mediterranean",
+                base_servings=2,
+                estimated_calories_per_serving=540,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"vegan", "gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(
+                    RecipeIngredient("chickpeas", 1.0, "can"),
+                    RecipeIngredient("rice", 1.0, "cup"),
+                    RecipeIngredient("cucumber", 1.0, "item"),
+                    RecipeIngredient("tomato", 1.0, "item"),
+                ),
+                steps=("Cook the rice and assemble the bowl.",),
+            ),
+            Recipe(
+                recipe_id="lemon-chickpea-bowl",
+                title="Lemon Chickpea Bowl",
+                cuisine="mediterranean",
+                base_servings=2,
+                estimated_calories_per_serving=540,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"vegan", "gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(
+                    RecipeIngredient("chickpeas", 1.0, "can"),
+                    RecipeIngredient("rice", 1.0, "cup"),
+                    RecipeIngredient("spinach", 1.0, "cup"),
+                    RecipeIngredient("lemon", 1.0, "item"),
+                ),
+                steps=("Cook the rice and assemble the lemon bowl.",),
+            ),
+            Recipe(
+                recipe_id="stuffed-pepper-bake",
+                title="Stuffed Pepper Bake",
+                cuisine="mediterranean",
+                base_servings=2,
+                estimated_calories_per_serving=540,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free", "vegetarian"}),
+                allergens=frozenset({"dairy"}),
+                ingredients=(
+                    RecipeIngredient("bell pepper", 2.0, "item"),
+                    RecipeIngredient("rice", 1.0, "cup"),
+                    RecipeIngredient("feta", 0.5, "cup"),
+                    RecipeIngredient("tomato", 1.0, "item"),
+                ),
+                steps=("Bake the stuffed peppers until tender.",),
+            ),
+        )
+
+
 class PlanningPhase6Tests(unittest.TestCase):
     def test_daily_calorie_target_changes_recipe_selection(self) -> None:
         planner = WeeklyMealPlanner(
@@ -371,6 +431,44 @@ class PlanningPhase6Tests(unittest.TestCase):
         )
         self.assertEqual(first_plan.shopping_list, second_plan.shopping_list)
         self.assertEqual(first_plan.estimated_total_cost, second_plan.estimated_total_cost)
+
+    def test_near_duplicate_penalty_prefers_distinct_second_meal(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=NearDuplicateRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "chickpeas": GroceryProduct("chickpeas", 1.0, "can", 2.0),
+                    "rice": GroceryProduct("rice", 1.0, "cup", 2.0),
+                    "cucumber": GroceryProduct("cucumber", 1.0, "item", 2.0),
+                    "tomato": GroceryProduct("tomato", 1.0, "item", 2.0),
+                    "spinach": GroceryProduct("spinach", 1.0, "cup", 2.0),
+                    "lemon": GroceryProduct("lemon", 1.0, "item", 2.0),
+                    "bell pepper": GroceryProduct("bell pepper", 2.0, "item", 2.0),
+                    "feta": GroceryProduct("feta", 0.5, "cup", 2.0),
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=80.0,
+            servings=2,
+            cuisine_preferences=("mediterranean",),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=(),
+            pantry_staples=(),
+            max_prep_time_minutes=25,
+            meals_per_day=1,
+            meal_structure=("dinner",),
+            daily_calorie_target_min=1000,
+            daily_calorie_target_max=1200,
+            variety_preference="balanced",
+        )
+
+        plan = planner.create_plan(request)
+        first_two_titles = [meal.recipe.title for meal in plan.meals[:2]]
+
+        self.assertEqual(first_two_titles[0], "Chickpea Rice Bowl")
+        self.assertEqual(first_two_titles[1], "Stuffed Pepper Bake")
 
     def test_allergy_filtering_still_blocks_better_calorie_fit(self) -> None:
         planner = WeeklyMealPlanner(
