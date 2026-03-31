@@ -29,66 +29,102 @@ def render_meal_plan(request: PlannerRequest) -> None:
     )
     plan = planner.create_plan(request)
 
-    if pricing_context.note:
-        st.warning(pricing_context.note)
-
-    if plan.notes:
-        for note in plan.notes:
-            st.info(note)
-
     pricing_header = "Mock pricing" if plan.pricing_source == "mock" else "Kroger or Fry's pricing"
-    st.subheader(f"Weekly Plan ({pricing_header})")
+    remaining_budget = request.weekly_budget - plan.estimated_total_cost
 
+    st.divider()
+    st.subheader("Planner Notes")
+    if pricing_context.note or plan.notes:
+        notes_container = st.container(border=True)
+        with notes_container:
+            if pricing_context.note:
+                st.warning(pricing_context.note)
+            for note in plan.notes:
+                st.info(note)
+    else:
+        st.caption("No planner notes for this run.")
+
+    st.divider()
+    st.subheader("Budget Summary")
+    summary_left, summary_right = st.columns((2, 1))
+    with summary_left:
+        metric_cols = st.columns(3)
+        metric_cols[0].metric("Weekly Budget", f"${request.weekly_budget:.2f}")
+        metric_cols[1].metric("Estimated Spend", f"${plan.estimated_total_cost:.2f}")
+        metric_cols[2].metric("Remaining", f"${remaining_budget:.2f}")
+        st.caption(f"Pricing source: {pricing_header}")
+        if plan.selected_store:
+            st.caption(f"Store: {plan.selected_store}")
+    with summary_right:
+        status_label = "Within budget"
+        if remaining_budget < 0:
+            status_label = "Over budget"
+        with st.container(border=True):
+            st.markdown(f"**{status_label}**")
+            st.write(
+                "The shopping list estimate reflects pantry subtraction and package-based purchase costs."
+            )
+
+    st.divider()
+    st.subheader("Weekly Plan")
+    st.caption("Each meal shows the recipe, timing, and estimated added cost for that selection.")
     for day in range(1, 8):
         day_meals = [meal for meal in plan.meals if meal.day == day]
         with st.container(border=True):
-            st.markdown(f"**{day_name(day)}**")
+            day_header, day_meta = st.columns((3, 1))
+            day_header.markdown(f"### {day_name(day)}")
+            day_meta.caption(pricing_header)
             for meal in day_meals:
-                st.markdown(
-                    f"{slot_label(request.meals_per_day, meal.slot)} {meal.slot}: **{meal.recipe.title}**  "
-                    f"({meal.recipe.cuisine.title()}, {meal.recipe.prep_time_minutes} min)"
-                )
-                st.caption(
-                    "Tags: "
-                    + ", ".join(sorted(meal.recipe.diet_tags))
-                    + f" | Estimated added cost: ${meal.incremental_cost:.2f}"
-                )
-                with st.expander(f"Show ingredients and steps for {meal.recipe.title}"):
+                meal_title, meal_stats = st.columns((3, 2))
+                with meal_title:
+                    st.markdown(
+                        f"**{slot_label(request.meals_per_day, meal.slot)} {meal.slot}**: {meal.recipe.title}"
+                    )
+                    st.caption(
+                        "Cuisine: "
+                        + meal.recipe.cuisine.title()
+                        + " | Tags: "
+                        + ", ".join(sorted(meal.recipe.diet_tags))
+                    )
+                with meal_stats:
+                    prep_col, cost_col = st.columns(2)
+                    prep_col.metric("Prep Time", f"{meal.recipe.prep_time_minutes} min")
+                    cost_col.metric("Meal Cost", f"${meal.incremental_cost:.2f}")
+
+                with st.expander(f"Ingredients and steps for {meal.recipe.title}"):
                     scale = meal.scaled_servings / meal.recipe.base_servings
-                    st.markdown("**Ingredients**")
-                    for ingredient in meal.recipe.ingredients:
-                        st.write(f"- {round(ingredient.quantity * scale, 2)} {ingredient.unit} {ingredient.name}")
-                    st.markdown("**Steps**")
-                    for index, step in enumerate(meal.recipe.steps, start=1):
-                        st.write(f"{index}. {step}")
+                    detail_left, detail_right = st.columns(2)
+                    with detail_left:
+                        st.markdown("**Ingredients**")
+                        for ingredient in meal.recipe.ingredients:
+                            st.write(f"- {round(ingredient.quantity * scale, 2)} {ingredient.unit} {ingredient.name}")
+                    with detail_right:
+                        st.markdown("**Steps**")
+                        for index, step in enumerate(meal.recipe.steps, start=1):
+                            st.write(f"{index}. {step}")
+                st.divider()
 
     st.subheader("Shopping List")
-    if plan.selected_store:
-        st.write(f"Store: **{plan.selected_store}**")
-    st.write(f"Estimated total cost: **${plan.estimated_total_cost:.2f}**")
-    st.write(f"Weekly budget: **${request.weekly_budget:.2f}**")
-    st.write(f"Remaining budget: **${request.weekly_budget - plan.estimated_total_cost:.2f}**")
-
+    st.caption("Needed amounts are recipe usage. Buying and package count reflect whole-package purchases.")
     shopping_rows = [
         {
             "Ingredient": item.name,
-            "Needed": f"{item.quantity} {item.unit}",
-            "Buying": (
-                "N/A"
-                if item.estimated_packages == 0
-                else f"{item.estimated_packages} x {item.package_quantity} {item.package_unit}"
-            ),
-            "Purchased": (
+            "Amount Needed": f"{item.quantity} {item.unit}",
+            "Amount Being Bought": (
                 "N/A"
                 if item.purchased_quantity == 0
                 else f"{item.purchased_quantity} {item.package_unit}"
             ),
-            "Est. Cost": "N/A" if item.estimated_cost is None else f"${item.estimated_cost:.2f}",
-            "Price Source": item.pricing_source,
+            "Package Count": item.estimated_packages,
+            "Estimated Cost": "N/A" if item.estimated_cost is None else f"${item.estimated_cost:.2f}",
         }
         for item in plan.shopping_list
     ]
-    st.table(shopping_rows)
+    st.dataframe(
+        shopping_rows,
+        use_container_width=True,
+        hide_index=True,
+    )
 
 
 st.subheader("Pricing")
