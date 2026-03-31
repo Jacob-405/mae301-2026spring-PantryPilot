@@ -1,9 +1,11 @@
 from dataclasses import replace
 import csv
 import io
+from datetime import datetime
 
 import streamlit as st
 
+from pantry_pilot.favorites import DEFAULT_FAVORITES_PATH, FavoritePlanStore
 from pantry_pilot.models import PlannerRequest
 from pantry_pilot.normalization import normalize_name, parse_csv_list
 from pantry_pilot.planner import PlannerError, WeeklyMealPlanner, day_name, slot_label
@@ -20,6 +22,7 @@ MEAL_STRUCTURE_OPTIONS = {
     "Dinner Only": ("dinner",),
 }
 LEFTOVERS_MODE_OPTIONS = ("Off", "Moderate", "Frequent")
+FAVORITES_STORE = FavoritePlanStore()
 
 FIELD_DEFAULTS = {
     "weekly_budget_input": 90.0,
@@ -120,6 +123,7 @@ def initialize_form_state() -> None:
     st.session_state.setdefault("current_plan", None)
     st.session_state.setdefault("plan_feedback", "")
     st.session_state.setdefault("plan_error", "")
+    st.session_state.setdefault("favorite_name_input", "")
 
 
 def apply_preset(preset_name: str) -> None:
@@ -255,6 +259,33 @@ def build_shopping_list_csv(plan) -> str:
             ]
         )
     return output.getvalue()
+
+
+def render_saved_plans() -> None:
+    saved_plans, warning = FAVORITES_STORE.list_saved_plans()
+    st.divider()
+    st.subheader("Saved Plans")
+    st.caption(f"Saved locally at `{DEFAULT_FAVORITES_PATH}`")
+    if warning:
+        st.warning(warning)
+    if not saved_plans:
+        st.caption("No saved plans yet.")
+        return
+    for record in saved_plans:
+        entry = st.container(border=True)
+        with entry:
+            st.markdown(f"**{record.name}**")
+            st.caption(
+                f"Saved {record.saved_at} | "
+                f"${record.plan.estimated_total_cost:.2f} | "
+                f"{round(sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in record.plan.meals) / 7):,} avg calories/day"
+            )
+            if st.button("Open Saved Plan", key=f"open-saved-{record.plan_id}", use_container_width=True):
+                st.session_state["current_request"] = record.request
+                st.session_state["current_plan"] = record.plan
+                st.session_state["plan_feedback"] = f"Loaded saved plan: {record.name}."
+                st.session_state["plan_error"] = ""
+                st.rerun()
 
 
 def validate_csv_field(raw_value: str, label: str) -> tuple[list[str], list[str]]:
@@ -444,15 +475,32 @@ def render_meal_plan(request: PlannerRequest, plan, planner: WeeklyMealPlanner, 
     st.divider()
     st.subheader("Export")
     export_text = build_plan_text_export(request, plan)
-    export_columns = st.columns(2)
-    export_columns[0].download_button(
+    save_col, text_col, csv_col = st.columns(3)
+    with save_col:
+        favorite_name = st.text_input(
+            "Favorite name",
+            key="favorite_name_input",
+            placeholder="Weeknight Favorites",
+            label_visibility="collapsed",
+        )
+        if st.button("Save As Favorite", use_container_width=True):
+            saved_record = FAVORITES_STORE.save_plan(
+                name=favorite_name or "Saved PantryPilot Plan",
+                saved_at=datetime.now().isoformat(timespec="seconds"),
+                request=request,
+                plan=plan,
+            )
+            st.session_state["plan_feedback"] = f"Saved plan as favorite: {saved_record.name}."
+            st.session_state["favorite_name_input"] = ""
+            st.rerun()
+    text_col.download_button(
         "Download Weekly Plan (.txt)",
         data=export_text,
         file_name="pantrypilot_weekly_plan.txt",
         mime="text/plain",
         use_container_width=True,
     )
-    export_columns[1].download_button(
+    csv_col.download_button(
         "Download Shopping List (.csv)",
         data=build_shopping_list_csv(plan),
         file_name="pantrypilot_shopping_list.csv",
@@ -795,3 +843,4 @@ stored_plan = st.session_state.get("current_plan")
 if stored_request is not None and stored_plan is not None:
     planner, pricing_context = build_planner_and_context(stored_request)
     render_meal_plan(stored_request, stored_plan, planner, pricing_context)
+render_saved_plans()
