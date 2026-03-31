@@ -73,7 +73,16 @@ def render_meal_plan(request: PlannerRequest) -> None:
         {
             "Ingredient": item.name,
             "Needed": f"{item.quantity} {item.unit}",
-            "Packages": item.estimated_packages,
+            "Buying": (
+                "N/A"
+                if item.estimated_packages == 0
+                else f"{item.estimated_packages} x {item.package_quantity} {item.package_unit}"
+            ),
+            "Purchased": (
+                "N/A"
+                if item.purchased_quantity == 0
+                else f"{item.purchased_quantity} {item.package_unit}"
+            ),
             "Est. Cost": "N/A" if item.estimated_cost is None else f"${item.estimated_cost:.2f}",
             "Price Source": item.pricing_source,
         }

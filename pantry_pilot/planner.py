@@ -4,7 +4,7 @@ import math
 from dataclasses import dataclass
 
 from pantry_pilot.models import MealPlan, PlannedMeal, PlannerRequest, Recipe, ShoppingListItem
-from pantry_pilot.normalization import normalize_ingredient_name, normalize_name
+from pantry_pilot.normalization import convert_unit_quantity, normalize_ingredient_name, normalize_name, normalize_unit
 from pantry_pilot.providers import GroceryProvider, LocalRecipeProvider, MockGroceryProvider
 
 
@@ -291,7 +291,7 @@ class WeeklyMealPlanner:
         total = 0.0
         for name, requirement in quantities.items():
             product = self.grocery_provider.get_product(name)
-            total += self._cost_for_requirement(product, requirement.quantity)
+            total += self._cost_for_requirement(product, requirement.quantity, requirement.unit)
         return round(total, 2)
 
     def _build_shopping_list(
@@ -303,29 +303,53 @@ class WeeklyMealPlanner:
         for name in sorted(quantities):
             requirement = quantities[name]
             product = self.grocery_provider.get_product(name)
-            packages, cost = self._package_and_cost(product, requirement.quantity)
+            packages, purchased_quantity, cost = self._package_purchase(product, requirement.quantity, requirement.unit)
             total += cost
             items.append(
                 ShoppingListItem(
                     name=name,
                     quantity=round(requirement.quantity, 2),
-                    unit=product.unit if product is not None else requirement.unit,
+                    unit=requirement.unit,
                     estimated_packages=packages,
+                    package_quantity=0.0 if product is None else round(product.package_quantity, 2),
+                    package_unit="" if product is None else product.unit,
+                    purchased_quantity=round(purchased_quantity, 2),
                     estimated_cost=round(cost, 2) if product is not None and product.package_price is not None else None,
                     pricing_source=product.source if product is not None else "unpriced",
                 )
             )
         return tuple(items), round(total, 2)
 
-    def _cost_for_requirement(self, product, required_quantity: float) -> float:
-        _, cost = self._package_and_cost(product, required_quantity)
+    def _cost_for_requirement(self, product, required_quantity: float, required_unit: str) -> float:
+        _, _, cost = self._package_purchase(product, required_quantity, required_unit)
         return cost
 
-    def _package_and_cost(self, product, required_quantity: float) -> tuple[int, float]:
+    def _package_purchase(
+        self,
+        product,
+        required_quantity: float,
+        required_unit: str,
+    ) -> tuple[int, float, float]:
         if product is None or product.package_price is None or product.package_quantity <= 0:
-            return 0, 0.0
-        packages = math.ceil(required_quantity / product.package_quantity)
-        return packages, packages * product.package_price
+            return 0, 0.0, 0.0
+        purchasable_quantity = self._convert_to_purchase_unit(required_quantity, required_unit, product.unit)
+        if purchasable_quantity is None:
+            return 0, 0.0, 0.0
+        packages = math.ceil(purchasable_quantity / product.package_quantity)
+        purchased_quantity = packages * product.package_quantity
+        return packages, purchased_quantity, packages * product.package_price
+
+    def _convert_to_purchase_unit(
+        self,
+        quantity: float,
+        recipe_unit: str,
+        product_unit: str,
+    ) -> float | None:
+        normalized_recipe_unit = normalize_unit(recipe_unit)
+        normalized_product_unit = normalize_unit(product_unit)
+        if normalized_recipe_unit == normalized_product_unit:
+            return quantity
+        return convert_unit_quantity(quantity, normalized_recipe_unit, normalized_product_unit)
 
 
 def day_name(day_number: int) -> str:

@@ -12,6 +12,7 @@ class RecipeIngredient:
 
 @dataclass(frozen=True)
 class Recipe:
+    recipe_id: str
     title: str
     cuisine: str
     base_servings: int
@@ -74,7 +75,10 @@ class ShoppingListItem:
     quantity: float
     unit: str
     estimated_packages: int
-    estimated_cost: float | None
+    package_quantity: float = 0.0
+    package_unit: str = ""
+    purchased_quantity: float = 0.0
+    estimated_cost: float | None = None
     pricing_source: str = "mock"
 
 

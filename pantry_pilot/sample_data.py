@@ -1,391 +1,787 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from pantry_pilot.models import Recipe, RecipeIngredient
+from pantry_pilot.normalization import normalize_ingredient_name, normalize_name, normalize_unit
+
+
+@dataclass(frozen=True)
+class IngredientProfile:
+    allergens: frozenset[str] | None
+    animal_product: bool = False
+    meat: bool = False
+
+
+INGREDIENT_PROFILES: dict[str, IngredientProfile] = {
+    "avocado": IngredientProfile(frozenset()),
+    "banana": IngredientProfile(frozenset()),
+    "bell pepper": IngredientProfile(frozenset()),
+    "black beans": IngredientProfile(frozenset()),
+    "bread": IngredientProfile(frozenset({"gluten"})),
+    "broccoli": IngredientProfile(frozenset()),
+    "canned tomatoes": IngredientProfile(frozenset()),
+    "carrot": IngredientProfile(frozenset()),
+    "celery": IngredientProfile(frozenset()),
+    "cheddar cheese": IngredientProfile(frozenset({"dairy"}), animal_product=True),
+    "chicken breast": IngredientProfile(frozenset(), meat=True),
+    "chickpeas": IngredientProfile(frozenset()),
+    "chili powder": IngredientProfile(frozenset()),
+    "cinnamon": IngredientProfile(frozenset()),
+    "corn": IngredientProfile(frozenset()),
+    "cucumber": IngredientProfile(frozenset()),
+    "curry powder": IngredientProfile(frozenset()),
+    "eggs": IngredientProfile(frozenset({"egg"}), animal_product=True),
+    "feta": IngredientProfile(frozenset({"dairy"}), animal_product=True),
+    "frozen berries": IngredientProfile(frozenset()),
+    "garlic": IngredientProfile(frozenset()),
+    "granola": IngredientProfile(frozenset({"gluten"})),
+    "ground turkey": IngredientProfile(frozenset(), meat=True),
+    "honey": IngredientProfile(frozenset(), animal_product=True),
+    "lemon": IngredientProfile(frozenset()),
+    "lentils": IngredientProfile(frozenset()),
+    "lime": IngredientProfile(frozenset()),
+    "milk": IngredientProfile(frozenset({"dairy"}), animal_product=True),
+    "olive oil": IngredientProfile(frozenset()),
+    "onion": IngredientProfile(frozenset()),
+    "parmesan": IngredientProfile(frozenset({"dairy"}), animal_product=True),
+    "pasta": IngredientProfile(frozenset({"gluten"})),
+    "peanut butter": IngredientProfile(frozenset({"peanut"})),
+    "rice": IngredientProfile(frozenset()),
+    "rolled oats": IngredientProfile(frozenset()),
+    "salsa": IngredientProfile(frozenset()),
+    "soy sauce": IngredientProfile(frozenset({"soy"})),
+    "spinach": IngredientProfile(frozenset()),
+    "tofu": IngredientProfile(frozenset({"soy"})),
+    "tomato": IngredientProfile(frozenset()),
+    "vegetable broth": IngredientProfile(frozenset()),
+    "yogurt": IngredientProfile(frozenset({"dairy"}), animal_product=True),
+    "zucchini": IngredientProfile(frozenset()),
+}
+
+REQUIRED_RECIPE_FIELDS = (
+    "title",
+    "cuisine",
+    "base_servings",
+    "prep_time_minutes",
+    "meal_types",
+    "ingredients",
+    "steps",
+)
+SAFE_DERIVED_DIET_TAGS = frozenset({"vegetarian", "vegan", "gluten-free", "dairy-free"})
+
+
+def _ingredient(name: str, quantity: float, unit: str) -> dict[str, str | float]:
+    return {"name": name, "quantity": quantity, "unit": unit}
+
+
+RAW_RECIPES: tuple[dict, ...] = (
+    {
+        "title": "Avocado Toast",
+        "cuisine": "american",
+        "base_servings": 2,
+        "prep_time_minutes": 10,
+        "meal_types": ("breakfast", "lunch"),
+        "ingredients": (
+            _ingredient("bread", 4.0, "slices"),
+            _ingredient("avocados", 2.0, "items"),
+            _ingredient("tomatoes", 1.0, "item"),
+            _ingredient("olive oil", 1.0, "tablespoon"),
+        ),
+        "steps": (
+            "Toast bread and mash avocado.",
+            "Top toast with avocado, tomato, and olive oil.",
+        ),
+    },
+    {
+        "title": "Banana Yogurt Oat Cup",
+        "cuisine": "american",
+        "base_servings": 2,
+        "prep_time_minutes": 8,
+        "meal_types": ("breakfast",),
+        "ingredients": (
+            _ingredient("yogurt", 1.5, "cups"),
+            _ingredient("banana", 2.0, "items"),
+            _ingredient("rolled oats", 1.0, "cup"),
+            _ingredient("honey", 1.0, "tablespoon"),
+            _ingredient("cinnamon", 1.0, "teaspoon"),
+        ),
+        "steps": (
+            "Spoon yogurt into cups and stir in oats.",
+            "Top with banana, honey, and cinnamon.",
+        ),
+    },
+    {
+        "title": "Berry Yogurt Parfait",
+        "cuisine": "american",
+        "base_servings": 2,
+        "prep_time_minutes": 8,
+        "meal_types": ("breakfast",),
+        "ingredients": (
+            _ingredient("yogurt", 2.0, "cups"),
+            _ingredient("frozen berries", 2.0, "cups"),
+            _ingredient("granola", 1.5, "cups"),
+            _ingredient("honey", 2.0, "tablespoons"),
+        ),
+        "steps": (
+            "Layer yogurt, berries, and granola into bowls.",
+            "Drizzle with honey before serving.",
+        ),
+    },
+    {
+        "title": "Black Bean Corn Salad",
+        "cuisine": "mexican",
+        "base_servings": 4,
+        "prep_time_minutes": 15,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("black beans", 2.0, "cans"),
+            _ingredient("corn kernels", 2.0, "cups"),
+            _ingredient("tomatoes", 2.0, "items"),
+            _ingredient("lime", 1.0, "item"),
+            _ingredient("olive oil", 1.0, "tablespoon"),
+        ),
+        "steps": (
+            "Mix beans, corn, and tomato together.",
+            "Dress with lime juice and olive oil.",
+        ),
+    },
+    {
+        "title": "Black Bean Taco Bowls",
+        "cuisine": "mexican",
+        "base_servings": 4,
+        "prep_time_minutes": 25,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("black beans canned", 2.0, "cans"),
+            _ingredient("corn", 2.0, "cups"),
+            _ingredient("salsa", 1.5, "cups"),
+            _ingredient("avocado", 2.0, "items"),
+            _ingredient("lime", 1.0, "item"),
+        ),
+        "steps": (
+            "Cook rice and warm black beans with corn.",
+            "Serve in bowls with salsa, avocado, and lime.",
+        ),
+    },
+    {
+        "title": "Broccoli Cheddar Rice Bowl",
+        "cuisine": "american",
+        "base_servings": 4,
+        "prep_time_minutes": 25,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("broccoli florets", 3.0, "cups"),
+            _ingredient("cheddar cheese", 1.5, "cups"),
+            _ingredient("carrots", 2.0, "items"),
+            _ingredient("vegetable broth", 3.0, "cups"),
+        ),
+        "steps": (
+            "Cook rice with broth while steaming broccoli and carrot.",
+            "Stir in cheddar until melted and serve in bowls.",
+        ),
+    },
+    {
+        "title": "Broccoli Garlic Rice",
+        "cuisine": "american",
+        "base_servings": 4,
+        "prep_time_minutes": 20,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("broccoli", 3.0, "cups"),
+            _ingredient("garlic cloves", 4.0, "cloves"),
+            _ingredient("olive oil", 2.0, "tablespoons"),
+            _ingredient("lemon", 1.0, "item"),
+        ),
+        "steps": (
+            "Cook rice and steam broccoli until tender.",
+            "Toss with garlic, olive oil, and lemon.",
+        ),
+    },
+    {
+        "title": "Chicken Rice Skillet",
+        "cuisine": "american",
+        "base_servings": 4,
+        "prep_time_minutes": 35,
+        "meal_types": ("dinner",),
+        "extra_diet_tags": ("high-protein",),
+        "ingredients": (
+            _ingredient("chicken breast", 1.5, "pounds"),
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("broccoli", 2.0, "cups"),
+            _ingredient("carrots", 2.0, "items"),
+            _ingredient("veggie broth", 4.0, "cups"),
+        ),
+        "steps": (
+            "Brown chicken pieces in a skillet.",
+            "Add rice, vegetables, and broth, then cover until cooked through.",
+        ),
+    },
+    {
+        "title": "Chicken Tomato Pasta",
+        "cuisine": "italian",
+        "base_servings": 4,
+        "prep_time_minutes": 30,
+        "meal_types": ("dinner",),
+        "extra_diet_tags": ("high-protein",),
+        "ingredients": (
+            _ingredient("chicken breast", 1.0, "pound"),
+            _ingredient("penne pasta", 12.0, "ounces"),
+            _ingredient("canned tomatoes", 2.0, "cans"),
+            _ingredient("spinach", 2.0, "cups"),
+            _ingredient("garlic clove", 4.0, "cloves"),
+        ),
+        "steps": (
+            "Cook pasta until tender while browning chicken.",
+            "Simmer tomatoes, spinach, and garlic, then toss with pasta and chicken.",
+        ),
+    },
+    {
+        "title": "Chickpea Salsa Rice Skillet",
+        "cuisine": "mexican",
+        "base_servings": 4,
+        "prep_time_minutes": 20,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("canned chickpeas", 2.0, "cans"),
+            _ingredient("corn", 2.0, "cups"),
+            _ingredient("salsa", 1.5, "cups"),
+            _ingredient("bell peppers", 1.0, "item"),
+        ),
+        "steps": (
+            "Cook rice and saute bell pepper until tender.",
+            "Fold in chickpeas, corn, and salsa until heated through.",
+        ),
+    },
+    {
+        "title": "Chickpea Tomato Skillet",
+        "cuisine": "mediterranean",
+        "base_servings": 4,
+        "prep_time_minutes": 20,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("chickpeas", 2.0, "cans"),
+            _ingredient("tomatoes", 3.0, "items"),
+            _ingredient("garlic cloves", 3.0, "cloves"),
+            _ingredient("olive oil", 2.0, "tablespoons"),
+            _ingredient("spinach", 2.0, "cups"),
+        ),
+        "steps": (
+            "Cook tomato and garlic in olive oil until saucy.",
+            "Fold in chickpeas and spinach until warmed through.",
+        ),
+    },
+    {
+        "title": "Cinnamon Banana Oatmeal",
+        "cuisine": "american",
+        "base_servings": 2,
+        "prep_time_minutes": 12,
+        "meal_types": ("breakfast",),
+        "ingredients": (
+            _ingredient("old fashioned oats", 2.0, "cups"),
+            _ingredient("banana", 2.0, "items"),
+            _ingredient("cinnamon", 1.0, "teaspoon"),
+            _ingredient("honey", 1.0, "tablespoon"),
+        ),
+        "steps": (
+            "Cook oats with water until creamy.",
+            "Top with sliced banana, cinnamon, and honey.",
+        ),
+    },
+    {
+        "title": "Cucumber Tomato Feta Toast",
+        "cuisine": "mediterranean",
+        "base_servings": 2,
+        "prep_time_minutes": 10,
+        "meal_types": ("breakfast", "lunch"),
+        "ingredients": (
+            _ingredient("bread", 4.0, "slices"),
+            _ingredient("cucumber", 1.0, "item"),
+            _ingredient("tomatoes", 2.0, "items"),
+            _ingredient("feta", 0.5, "cup"),
+            _ingredient("olive oil", 1.0, "tablespoon"),
+        ),
+        "steps": (
+            "Toast bread and top with chopped cucumber and tomato.",
+            "Finish with feta and olive oil.",
+        ),
+    },
+    {
+        "title": "Egg Fried Rice Bowl",
+        "cuisine": "asian",
+        "base_servings": 4,
+        "prep_time_minutes": 20,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("eggs", 4.0, "items"),
+            _ingredient("carrot", 2.0, "items"),
+            _ingredient("broccoli", 2.0, "cups"),
+            _ingredient("soy sauce", 3.0, "tablespoons"),
+        ),
+        "steps": (
+            "Cook rice and scramble eggs in a skillet.",
+            "Stir in vegetables and soy sauce until everything is hot.",
+        ),
+    },
+    {
+        "title": "Feta Rice Stuffed Peppers",
+        "cuisine": "mediterranean",
+        "base_servings": 4,
+        "prep_time_minutes": 35,
+        "meal_types": ("dinner",),
+        "ingredients": (
+            _ingredient("bell peppers", 4.0, "items"),
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("feta", 1.0, "cup"),
+            _ingredient("tomato", 2.0, "items"),
+            _ingredient("olive oil", 1.0, "tablespoon"),
+        ),
+        "steps": (
+            "Roast halved peppers until slightly tender.",
+            "Fill with rice, tomato, and feta, then bake until hot.",
+        ),
+    },
+    {
+        "title": "Garlic Tomato Pasta",
+        "cuisine": "italian",
+        "base_servings": 4,
+        "prep_time_minutes": 25,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("pasta", 16.0, "ounces"),
+            _ingredient("canned tomatoes", 2.0, "cans"),
+            _ingredient("spinach", 2.0, "cups"),
+            _ingredient("garlic cloves", 4.0, "cloves"),
+            _ingredient("olive oil", 2.0, "tablespoons"),
+        ),
+        "steps": (
+            "Cook pasta until tender.",
+            "Simmer tomatoes, garlic, and spinach, then toss with pasta.",
+        ),
+    },
+    {
+        "title": "Greek Chickpea Salad",
+        "cuisine": "mediterranean",
+        "base_servings": 4,
+        "prep_time_minutes": 15,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("chickpeas", 2.0, "cans"),
+            _ingredient("cucumber", 1.0, "item"),
+            _ingredient("tomatoes", 2.0, "items"),
+            _ingredient("feta", 1.0, "cup"),
+            _ingredient("olive oil", 4.0, "tablespoons"),
+            _ingredient("lemon", 1.0, "item"),
+        ),
+        "steps": (
+            "Mix chickpeas with chopped vegetables and feta.",
+            "Dress with olive oil and lemon juice.",
+        ),
+    },
+    {
+        "title": "Lemon Chickpea Pasta",
+        "cuisine": "mediterranean",
+        "base_servings": 4,
+        "prep_time_minutes": 25,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("pasta", 12.0, "oz"),
+            _ingredient("chickpeas", 2.0, "cans"),
+            _ingredient("spinach", 2.0, "cups"),
+            _ingredient("lemon", 1.0, "item"),
+            _ingredient("olive oil", 2.0, "tablespoons"),
+        ),
+        "steps": (
+            "Cook pasta and warm chickpeas in olive oil.",
+            "Toss with spinach and lemon before serving.",
+        ),
+    },
+    {
+        "title": "Lemon Lentil Rice Bowl",
+        "cuisine": "mediterranean",
+        "base_servings": 4,
+        "prep_time_minutes": 30,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("lentils", 2.0, "cups"),
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("cucumber", 1.0, "item"),
+            _ingredient("tomato", 2.0, "items"),
+            _ingredient("lemon", 1.0, "item"),
+        ),
+        "steps": (
+            "Cook lentils and rice until tender.",
+            "Serve with cucumber, tomato, and lemon.",
+        ),
+    },
+    {
+        "title": "Lentil Salsa Rice Bowl",
+        "cuisine": "mexican",
+        "base_servings": 4,
+        "prep_time_minutes": 30,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("lentils", 2.0, "cups"),
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("salsa", 1.5, "cups"),
+            _ingredient("corn", 1.5, "cups"),
+            _ingredient("lime", 1.0, "item"),
+        ),
+        "steps": (
+            "Cook lentils and rice until tender.",
+            "Top with salsa, corn, and lime.",
+        ),
+    },
+    {
+        "title": "Lentil Tomato Soup",
+        "cuisine": "mediterranean",
+        "base_servings": 4,
+        "prep_time_minutes": 30,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("lentils", 2.0, "cups"),
+            _ingredient("canned tomatoes", 2.0, "cans"),
+            _ingredient("carrots", 2.0, "items"),
+            _ingredient("celery", 2.0, "stalks"),
+            _ingredient("yellow onion", 1.0, "item"),
+            _ingredient("veggie broth", 6.0, "cups"),
+            _ingredient("olive oil", 2.0, "tablespoons"),
+        ),
+        "steps": (
+            "Cook onion, carrot, and celery in olive oil until softened.",
+            "Add lentils, tomatoes, and broth, then simmer until tender.",
+        ),
+    },
+    {
+        "title": "Mediterranean Rice Bowl",
+        "cuisine": "mediterranean",
+        "base_servings": 4,
+        "prep_time_minutes": 25,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("chickpeas", 2.0, "cans"),
+            _ingredient("cucumber", 1.0, "item"),
+            _ingredient("tomato", 2.0, "items"),
+            _ingredient("lemon", 1.0, "item"),
+            _ingredient("olive oil", 2.0, "tablespoons"),
+        ),
+        "steps": (
+            "Cook rice and warm chickpeas.",
+            "Top bowls with cucumber, tomato, lemon, and olive oil.",
+        ),
+    },
+    {
+        "title": "Mystery Curry",
+        "cuisine": "indian",
+        "base_servings": 4,
+        "prep_time_minutes": 30,
+        "meal_types": ("dinner",),
+        "ingredients": (
+            _ingredient("chickpeas", 2.0, "cans"),
+            _ingredient("coconut milk", 2.0, "cans"),
+            _ingredient("curry powder", 2.0, "tablespoons"),
+            _ingredient("rice", 2.0, "cups"),
+        ),
+        "steps": (
+            "Simmer chickpeas with coconut milk and curry powder.",
+            "Serve over rice.",
+        ),
+    },
+    {
+        "title": "Overnight Oats Bowl",
+        "cuisine": "american",
+        "base_servings": 2,
+        "prep_time_minutes": 10,
+        "meal_types": ("breakfast",),
+        "ingredients": (
+            _ingredient("rolled oats", 2.0, "cups"),
+            _ingredient("milk", 2.0, "cups"),
+            _ingredient("banana", 2.0, "items"),
+            _ingredient("peanut butter", 4.0, "tablespoons"),
+            _ingredient("cinnamon", 1.0, "teaspoon"),
+        ),
+        "steps": (
+            "Stir oats, milk, peanut butter, and cinnamon together.",
+            "Top with sliced banana and chill overnight.",
+        ),
+    },
+    {
+        "title": "Parmesan Broccoli Pasta",
+        "cuisine": "italian",
+        "base_servings": 4,
+        "prep_time_minutes": 25,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("pasta", 12.0, "ounces"),
+            _ingredient("broccoli", 3.0, "cups"),
+            _ingredient("parmesan", 1.0, "cup"),
+            _ingredient("olive oil", 2.0, "tablespoons"),
+            _ingredient("garlic cloves", 2.0, "cloves"),
+        ),
+        "steps": (
+            "Cook pasta and steam broccoli until tender.",
+            "Toss with parmesan, olive oil, and garlic.",
+        ),
+    },
+    {
+        "title": "Pasta Primavera",
+        "cuisine": "italian",
+        "base_servings": 4,
+        "prep_time_minutes": 30,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("pasta", 16.0, "ounces"),
+            _ingredient("zucchinis", 2.0, "items"),
+            _ingredient("bell peppers", 1.0, "item"),
+            _ingredient("spinach", 3.0, "cups"),
+            _ingredient("parmesan", 1.0, "cup"),
+            _ingredient("olive oil", 3.0, "tablespoons"),
+        ),
+        "steps": (
+            "Cook pasta until tender.",
+            "Saute vegetables and toss with pasta, olive oil, and parmesan.",
+        ),
+    },
+    {
+        "title": "Peanut Noodles",
+        "cuisine": "asian",
+        "base_servings": 4,
+        "prep_time_minutes": 20,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("pasta", 12.0, "oz"),
+            _ingredient("peanut butter", 6.0, "tablespoons"),
+            _ingredient("soy sauce", 4.0, "tablespoons"),
+            _ingredient("cucumber", 1.0, "item"),
+            _ingredient("carrots", 2.0, "items"),
+        ),
+        "steps": (
+            "Cook noodles and whisk together peanut butter and soy sauce.",
+            "Toss noodles with sauce and vegetables.",
+        ),
+    },
+    {
+        "title": "Savory Chickpea Toast",
+        "cuisine": "mediterranean",
+        "base_servings": 2,
+        "prep_time_minutes": 12,
+        "meal_types": ("breakfast", "lunch"),
+        "ingredients": (
+            _ingredient("bread", 4.0, "slices"),
+            _ingredient("chickpeas", 1.0, "can"),
+            _ingredient("lemon", 1.0, "item"),
+            _ingredient("olive oil", 1.0, "tablespoon"),
+            _ingredient("tomatoes", 1.0, "item"),
+        ),
+        "steps": (
+            "Mash chickpeas with lemon and olive oil.",
+            "Spread on toast and top with tomato.",
+        ),
+    },
+    {
+        "title": "Spinach Tomato Egg Toast",
+        "cuisine": "american",
+        "base_servings": 2,
+        "prep_time_minutes": 15,
+        "meal_types": ("breakfast",),
+        "ingredients": (
+            _ingredient("bread", 4.0, "slices"),
+            _ingredient("eggs", 4.0, "items"),
+            _ingredient("spinach", 2.0, "cups"),
+            _ingredient("tomatoes", 2.0, "items"),
+            _ingredient("cheddar cheese", 0.5, "cup"),
+        ),
+        "steps": (
+            "Cook eggs with spinach and tomato until set.",
+            "Serve over toast with cheddar.",
+        ),
+    },
+    {
+        "title": "Tofu Stir-Fry",
+        "cuisine": "asian",
+        "base_servings": 4,
+        "prep_time_minutes": 25,
+        "meal_types": ("lunch", "dinner"),
+        "ingredients": (
+            _ingredient("tofu", 2.0, "blocks"),
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("broccoli", 2.0, "cups"),
+            _ingredient("carrots", 2.0, "items"),
+            _ingredient("soy sauce", 4.0, "tablespoons"),
+            _ingredient("cloves garlic", 4.0, "cloves"),
+        ),
+        "steps": (
+            "Cook rice while stir-frying tofu and vegetables.",
+            "Add soy sauce and garlic, then cook until glossy.",
+        ),
+    },
+    {
+        "title": "Tomato Avocado Toast",
+        "cuisine": "american",
+        "base_servings": 2,
+        "prep_time_minutes": 10,
+        "meal_types": ("breakfast", "lunch"),
+        "ingredients": (
+            _ingredient("bread", 4.0, "slices"),
+            _ingredient("avocado", 2.0, "items"),
+            _ingredient("tomatoes", 2.0, "items"),
+            _ingredient("lemon", 1.0, "item"),
+        ),
+        "steps": (
+            "Toast bread and mash avocado with lemon.",
+            "Top with sliced tomato and serve immediately.",
+        ),
+    },
+    {
+        "title": "Turkey Chili",
+        "cuisine": "american",
+        "base_servings": 4,
+        "prep_time_minutes": 40,
+        "meal_types": ("dinner",),
+        "extra_diet_tags": ("high-protein",),
+        "ingredients": (
+            _ingredient("ground turkey", 1.0, "pound"),
+            _ingredient("black beans", 2.0, "cans"),
+            _ingredient("canned tomatoes", 2.0, "cans"),
+            _ingredient("red onion", 1.0, "item"),
+            _ingredient("bell peppers", 1.0, "item"),
+            _ingredient("chili powder", 2.0, "tablespoons"),
+        ),
+        "steps": (
+            "Brown turkey with onion and bell pepper.",
+            "Add beans, tomatoes, and chili powder, then simmer until thick.",
+        ),
+    },
+    {
+        "title": "Turkey Taco Rice Skillet",
+        "cuisine": "mexican",
+        "base_servings": 4,
+        "prep_time_minutes": 30,
+        "meal_types": ("dinner",),
+        "extra_diet_tags": ("high-protein",),
+        "ingredients": (
+            _ingredient("ground turkey", 1.0, "pound"),
+            _ingredient("rice", 2.0, "cups"),
+            _ingredient("salsa", 1.5, "cups"),
+            _ingredient("corn", 1.5, "cups"),
+            _ingredient("black beans", 1.0, "can"),
+        ),
+        "steps": (
+            "Brown turkey and cook rice until tender.",
+            "Fold in salsa, corn, and black beans until hot.",
+        ),
+    },
+    {
+        "title": "Veggie Egg Scramble",
+        "cuisine": "american",
+        "base_servings": 2,
+        "prep_time_minutes": 15,
+        "meal_types": ("breakfast",),
+        "ingredients": (
+            _ingredient("eggs", 6.0, "items"),
+            _ingredient("spinach", 2.0, "cups"),
+            _ingredient("bell peppers", 1.0, "item"),
+            _ingredient("yellow onion", 0.5, "item"),
+            _ingredient("cheddar cheese", 1.0, "cup"),
+        ),
+        "steps": (
+            "Saute chopped vegetables until tender.",
+            "Add beaten eggs and cook until set, then fold in cheese.",
+        ),
+    },
+)
 
 
 def sample_recipes() -> tuple[Recipe, ...]:
-    return (
-        Recipe(
-            title="Overnight Oats Bowl",
-            cuisine="american",
-            base_servings=2,
-            prep_time_minutes=10,
-            meal_types=("breakfast",),
-            diet_tags=frozenset({"vegetarian"}),
-            allergens=frozenset({"dairy"}),
-            ingredients=(
-                RecipeIngredient("rolled oats", 2.0, "cup"),
-                RecipeIngredient("milk", 2.0, "cup"),
-                RecipeIngredient("banana", 2.0, "item"),
-                RecipeIngredient("peanut butter", 4.0, "tbsp"),
-                RecipeIngredient("cinnamon", 1.0, "tsp"),
-            ),
-            steps=(
-                "Stir oats, milk, peanut butter, and cinnamon together.",
-                "Top with sliced banana and chill overnight.",
-            ),
-        ),
-        Recipe(
-            title="Berry Yogurt Parfait",
-            cuisine="american",
-            base_servings=2,
-            prep_time_minutes=8,
-            meal_types=("breakfast",),
-            diet_tags=frozenset({"vegetarian"}),
-            allergens=frozenset({"dairy"}),
-            ingredients=(
-                RecipeIngredient("yogurt", 2.0, "cup"),
-                RecipeIngredient("frozen berries", 2.0, "cup"),
-                RecipeIngredient("granola", 1.5, "cup"),
-                RecipeIngredient("honey", 2.0, "tbsp"),
-            ),
-            steps=(
-                "Layer yogurt, berries, and granola into bowls.",
-                "Drizzle with honey before serving.",
-            ),
-        ),
-        Recipe(
-            title="Veggie Egg Scramble",
-            cuisine="american",
-            base_servings=2,
-            prep_time_minutes=15,
-            meal_types=("breakfast",),
-            diet_tags=frozenset({"vegetarian", "gluten-free"}),
-            allergens=frozenset({"egg"}),
-            ingredients=(
-                RecipeIngredient("eggs", 6.0, "item"),
-                RecipeIngredient("spinach", 2.0, "cup"),
-                RecipeIngredient("bell pepper", 1.0, "item"),
-                RecipeIngredient("onion", 0.5, "item"),
-                RecipeIngredient("cheddar cheese", 1.0, "cup"),
-            ),
-            steps=(
-                "Saute chopped vegetables until tender.",
-                "Add beaten eggs and cook until set, then fold in cheese.",
-            ),
-        ),
-        Recipe(
-            title="Cinnamon Banana Oatmeal",
-            cuisine="american",
-            base_servings=2,
-            prep_time_minutes=12,
-            meal_types=("breakfast",),
-            diet_tags=frozenset({"vegan", "gluten-free"}),
-            allergens=frozenset(),
-            ingredients=(
-                RecipeIngredient("rolled oats", 2.0, "cup"),
-                RecipeIngredient("banana", 2.0, "item"),
-                RecipeIngredient("cinnamon", 1.0, "tsp"),
-                RecipeIngredient("honey", 1.0, "tbsp"),
-            ),
-            steps=(
-                "Cook oats with water until creamy.",
-                "Top with sliced banana, cinnamon, and honey.",
-            ),
-        ),
-        Recipe(
-            title="Tomato Avocado Toast",
-            cuisine="american",
-            base_servings=2,
-            prep_time_minutes=10,
-            meal_types=("breakfast", "lunch"),
-            diet_tags=frozenset({"vegan"}),
-            allergens=frozenset({"gluten"}),
-            ingredients=(
-                RecipeIngredient("bread", 4.0, "slice"),
-                RecipeIngredient("avocado", 2.0, "item"),
-                RecipeIngredient("tomato", 2.0, "item"),
-                RecipeIngredient("lemon", 1.0, "item"),
-            ),
-            steps=(
-                "Toast bread and mash avocado with lemon.",
-                "Top with sliced tomato and serve immediately.",
-            ),
-        ),
-        Recipe(
-            title="Greek Chickpea Salad",
-            cuisine="mediterranean",
-            base_servings=4,
-            prep_time_minutes=15,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegetarian", "gluten-free"}),
-            allergens=frozenset({"dairy"}),
-            ingredients=(
-                RecipeIngredient("chickpeas", 2.0, "can"),
-                RecipeIngredient("cucumber", 1.0, "item"),
-                RecipeIngredient("tomato", 2.0, "item"),
-                RecipeIngredient("feta", 1.0, "cup"),
-                RecipeIngredient("olive oil", 4.0, "tbsp"),
-                RecipeIngredient("lemon", 1.0, "item"),
-            ),
-            steps=(
-                "Mix chickpeas with chopped vegetables and feta.",
-                "Dress with olive oil and lemon juice.",
-            ),
-        ),
-        Recipe(
-            title="Lentil Tomato Soup",
-            cuisine="mediterranean",
-            base_servings=4,
-            prep_time_minutes=30,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegan", "gluten-free"}),
-            allergens=frozenset(),
-            ingredients=(
-                RecipeIngredient("lentils", 2.0, "cup"),
-                RecipeIngredient("canned tomatoes", 2.0, "can"),
-                RecipeIngredient("carrot", 2.0, "item"),
-                RecipeIngredient("celery", 2.0, "stalk"),
-                RecipeIngredient("onion", 1.0, "item"),
-                RecipeIngredient("vegetable broth", 6.0, "cup"),
-                RecipeIngredient("olive oil", 2.0, "tbsp"),
-            ),
-            steps=(
-                "Cook onion, carrot, and celery in olive oil until softened.",
-                "Add lentils, tomatoes, and broth, then simmer until tender.",
-            ),
-        ),
-        Recipe(
-            title="Black Bean Taco Bowls",
-            cuisine="mexican",
-            base_servings=4,
-            prep_time_minutes=25,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegetarian", "gluten-free"}),
-            allergens=frozenset(),
-            ingredients=(
-                RecipeIngredient("rice", 2.0, "cup"),
-                RecipeIngredient("black beans", 2.0, "can"),
-                RecipeIngredient("corn", 2.0, "cup"),
-                RecipeIngredient("salsa", 1.5, "cup"),
-                RecipeIngredient("avocado", 2.0, "item"),
-                RecipeIngredient("lime", 1.0, "item"),
-            ),
-            steps=(
-                "Cook rice and warm black beans with corn.",
-                "Serve in bowls with salsa, avocado, and lime.",
-            ),
-        ),
-        Recipe(
-            title="Mediterranean Rice Bowl",
-            cuisine="mediterranean",
-            base_servings=4,
-            prep_time_minutes=25,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegan", "gluten-free"}),
-            allergens=frozenset(),
-            ingredients=(
-                RecipeIngredient("rice", 2.0, "cup"),
-                RecipeIngredient("chickpeas", 2.0, "can"),
-                RecipeIngredient("cucumber", 1.0, "item"),
-                RecipeIngredient("tomato", 2.0, "item"),
-                RecipeIngredient("lemon", 1.0, "item"),
-                RecipeIngredient("olive oil", 2.0, "tbsp"),
-            ),
-            steps=(
-                "Cook rice and warm chickpeas.",
-                "Top bowls with cucumber, tomato, lemon, and olive oil.",
-            ),
-        ),
-        Recipe(
-            title="Garlic Tomato Pasta",
-            cuisine="italian",
-            base_servings=4,
-            prep_time_minutes=25,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegan"}),
-            allergens=frozenset({"gluten"}),
-            ingredients=(
-                RecipeIngredient("pasta", 16.0, "oz"),
-                RecipeIngredient("canned tomatoes", 2.0, "can"),
-                RecipeIngredient("spinach", 2.0, "cup"),
-                RecipeIngredient("garlic", 4.0, "clove"),
-                RecipeIngredient("olive oil", 2.0, "tbsp"),
-            ),
-            steps=(
-                "Cook pasta until tender.",
-                "Simmer tomatoes, garlic, and spinach, then toss with pasta.",
-            ),
-        ),
-        Recipe(
-            title="Tofu Stir-Fry",
-            cuisine="asian",
-            base_servings=4,
-            prep_time_minutes=25,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegan"}),
-            allergens=frozenset({"soy"}),
-            ingredients=(
-                RecipeIngredient("tofu", 2.0, "block"),
-                RecipeIngredient("rice", 2.0, "cup"),
-                RecipeIngredient("broccoli", 2.0, "cup"),
-                RecipeIngredient("carrot", 2.0, "item"),
-                RecipeIngredient("soy sauce", 4.0, "tbsp"),
-                RecipeIngredient("garlic", 4.0, "clove"),
-            ),
-            steps=(
-                "Cook rice while stir-frying tofu and vegetables.",
-                "Add soy sauce and garlic, then cook until glossy.",
-            ),
-        ),
-        Recipe(
-            title="Pasta Primavera",
-            cuisine="italian",
-            base_servings=4,
-            prep_time_minutes=30,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegetarian"}),
-            allergens=frozenset({"gluten", "dairy"}),
-            ingredients=(
-                RecipeIngredient("pasta", 16.0, "oz"),
-                RecipeIngredient("zucchini", 2.0, "item"),
-                RecipeIngredient("bell pepper", 1.0, "item"),
-                RecipeIngredient("spinach", 3.0, "cup"),
-                RecipeIngredient("parmesan", 1.0, "cup"),
-                RecipeIngredient("olive oil", 3.0, "tbsp"),
-            ),
-            steps=(
-                "Cook pasta until tender.",
-                "Saute vegetables and toss with pasta, olive oil, and parmesan.",
-            ),
-        ),
-        Recipe(
-            title="Chicken Rice Skillet",
-            cuisine="american",
-            base_servings=4,
-            prep_time_minutes=35,
-            meal_types=("dinner",),
-            diet_tags=frozenset({"high-protein", "gluten-free"}),
-            allergens=frozenset(),
-            ingredients=(
-                RecipeIngredient("chicken breast", 1.5, "lb"),
-                RecipeIngredient("rice", 2.0, "cup"),
-                RecipeIngredient("broccoli", 2.0, "cup"),
-                RecipeIngredient("carrot", 2.0, "item"),
-                RecipeIngredient("vegetable broth", 4.0, "cup"),
-            ),
-            steps=(
-                "Brown chicken pieces in a skillet.",
-                "Add rice, vegetables, and broth, then cover until cooked through.",
-            ),
-        ),
-        Recipe(
-            title="Turkey Chili",
-            cuisine="american",
-            base_servings=4,
-            prep_time_minutes=40,
-            meal_types=("dinner",),
-            diet_tags=frozenset({"high-protein", "gluten-free"}),
-            allergens=frozenset(),
-            ingredients=(
-                RecipeIngredient("ground turkey", 1.0, "lb"),
-                RecipeIngredient("black beans", 2.0, "can"),
-                RecipeIngredient("canned tomatoes", 2.0, "can"),
-                RecipeIngredient("onion", 1.0, "item"),
-                RecipeIngredient("bell pepper", 1.0, "item"),
-                RecipeIngredient("chili powder", 2.0, "tbsp"),
-            ),
-            steps=(
-                "Brown turkey with onion and bell pepper.",
-                "Add beans, tomatoes, and chili powder, then simmer until thick.",
-            ),
-        ),
-        Recipe(
-            title="Chickpea Salsa Rice Skillet",
-            cuisine="mexican",
-            base_servings=4,
-            prep_time_minutes=20,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegan", "gluten-free"}),
-            allergens=frozenset(),
-            ingredients=(
-                RecipeIngredient("rice", 2.0, "cup"),
-                RecipeIngredient("chickpeas", 2.0, "can"),
-                RecipeIngredient("corn", 2.0, "cup"),
-                RecipeIngredient("salsa", 1.5, "cup"),
-                RecipeIngredient("bell pepper", 1.0, "item"),
-            ),
-            steps=(
-                "Cook rice and saute bell pepper until tender.",
-                "Fold in chickpeas, corn, and salsa until heated through.",
-            ),
-        ),
-        Recipe(
-            title="Broccoli Cheddar Rice Bowl",
-            cuisine="american",
-            base_servings=4,
-            prep_time_minutes=25,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegetarian", "gluten-free"}),
-            allergens=frozenset({"dairy"}),
-            ingredients=(
-                RecipeIngredient("rice", 2.0, "cup"),
-                RecipeIngredient("broccoli", 3.0, "cup"),
-                RecipeIngredient("cheddar cheese", 1.5, "cup"),
-                RecipeIngredient("carrot", 2.0, "item"),
-                RecipeIngredient("vegetable broth", 3.0, "cup"),
-            ),
-            steps=(
-                "Cook rice with broth while steaming broccoli and carrot.",
-                "Stir in cheddar until melted and serve in bowls.",
-            ),
-        ),
-        Recipe(
-            title="Peanut Noodles",
-            cuisine="asian",
-            base_servings=4,
-            prep_time_minutes=20,
-            meal_types=("lunch", "dinner"),
-            diet_tags=frozenset({"vegetarian"}),
-            allergens=frozenset({"gluten", "peanut", "soy"}),
-            ingredients=(
-                RecipeIngredient("pasta", 12.0, "oz"),
-                RecipeIngredient("peanut butter", 6.0, "tbsp"),
-                RecipeIngredient("soy sauce", 4.0, "tbsp"),
-                RecipeIngredient("cucumber", 1.0, "item"),
-                RecipeIngredient("carrot", 2.0, "item"),
-            ),
-            steps=(
-                "Cook noodles and whisk together peanut butter and soy sauce.",
-                "Toss noodles with sauce and vegetables.",
-            ),
-        ),
-        Recipe(
-            title="Mystery Curry",
-            cuisine="indian",
-            base_servings=4,
-            prep_time_minutes=30,
-            meal_types=("dinner",),
-            diet_tags=frozenset({"vegetarian"}),
-            allergens=None,
-            ingredients=(
-                RecipeIngredient("chickpeas", 2.0, "can"),
-                RecipeIngredient("coconut milk", 2.0, "can"),
-                RecipeIngredient("curry powder", 2.0, "tbsp"),
-                RecipeIngredient("rice", 2.0, "cup"),
-            ),
-            steps=(
-                "Simmer chickpeas with coconut milk and curry powder.",
-                "Serve over rice.",
-            ),
-        ),
-        Recipe(
-            title="Avocado Toast",
-            cuisine="american",
-            base_servings=2,
-            prep_time_minutes=10,
-            meal_types=("breakfast", "lunch"),
-            diet_tags=frozenset({"vegan"}),
-            allergens=frozenset({"gluten"}),
-            ingredients=(
-                RecipeIngredient("bread", 4.0, "slice"),
-                RecipeIngredient("avocado", 2.0, "item"),
-                RecipeIngredient("tomato", 1.0, "item"),
-                RecipeIngredient("olive oil", 1.0, "tbsp"),
-            ),
-            steps=(
-                "Toast bread and mash avocado.",
-                "Top toast with avocado, tomato, and olive oil.",
-            ),
-        ),
+    _validate_raw_recipe_schema()
+    return tuple(_build_recipe(record) for record in RAW_RECIPES)
+
+
+def _build_recipe(record: dict) -> Recipe:
+    ingredients = tuple(_build_ingredient(item) for item in record["ingredients"])
+    canonical_names = tuple(ingredient.name for ingredient in ingredients)
+    return Recipe(
+        recipe_id=_recipe_id_from_title(record["title"]),
+        title=record["title"],
+        cuisine=normalize_name(record["cuisine"]),
+        base_servings=int(record["base_servings"]),
+        prep_time_minutes=int(record["prep_time_minutes"]),
+        meal_types=tuple(normalize_name(value) for value in record["meal_types"]),
+        diet_tags=_derive_diet_tags(canonical_names, record.get("extra_diet_tags", ())),
+        allergens=_derive_allergens(canonical_names),
+        ingredients=ingredients,
+        steps=tuple(record["steps"]),
     )
+
+
+def _build_ingredient(record: dict[str, str | float]) -> RecipeIngredient:
+    return RecipeIngredient(
+        name=normalize_ingredient_name(str(record["name"])),
+        quantity=float(record["quantity"]),
+        unit=normalize_unit(str(record["unit"])),
+    )
+
+
+def _derive_allergens(ingredient_names: tuple[str, ...]) -> frozenset[str] | None:
+    allergens: set[str] = set()
+    for ingredient_name in ingredient_names:
+        profile = INGREDIENT_PROFILES.get(ingredient_name)
+        if profile is None or profile.allergens is None:
+            return None
+        allergens.update(profile.allergens)
+    return frozenset(sorted(allergens))
+
+
+def _derive_diet_tags(ingredient_names: tuple[str, ...], extra_tags: tuple[str, ...]) -> frozenset[str]:
+    tags = {
+        normalize_name(tag)
+        for tag in extra_tags
+        if normalize_name(tag) not in SAFE_DERIVED_DIET_TAGS
+    }
+    profiles: list[IngredientProfile] = []
+    for ingredient_name in ingredient_names:
+        profile = INGREDIENT_PROFILES.get(ingredient_name)
+        if profile is None or profile.allergens is None:
+            return frozenset(sorted(tags))
+        profiles.append(profile)
+
+    if all(not profile.meat for profile in profiles):
+        tags.add("vegetarian")
+    if all(not profile.meat and not profile.animal_product for profile in profiles):
+        tags.add("vegan")
+    if all("gluten" not in profile.allergens for profile in profiles):
+        tags.add("gluten-free")
+    if all("dairy" not in profile.allergens for profile in profiles):
+        tags.add("dairy-free")
+    return frozenset(sorted(tags))
+
+
+def _recipe_id_from_title(title: str) -> str:
+    return normalize_name(title).replace(" ", "-")
+
+
+def _validate_raw_recipe_schema() -> None:
+    seen_ids: set[str] = set()
+    for record in RAW_RECIPES:
+        missing_fields = [field for field in REQUIRED_RECIPE_FIELDS if field not in record]
+        if missing_fields:
+            raise ValueError(f"Recipe record is missing required fields: {missing_fields}")
+        if not record["ingredients"]:
+            raise ValueError(f"Recipe '{record['title']}' must include at least one ingredient.")
+        if not record["steps"]:
+            raise ValueError(f"Recipe '{record['title']}' must include at least one step.")
+        recipe_id = _recipe_id_from_title(record["title"])
+        if recipe_id in seen_ids:
+            raise ValueError(f"Duplicate recipe id detected: {recipe_id}")
+        seen_ids.add(recipe_id)
+        for ingredient in record["ingredients"]:
+            if set(ingredient) != {"name", "quantity", "unit"}:
+                raise ValueError(
+                    f"Recipe '{record['title']}' has an ingredient with an inconsistent schema: {ingredient}"
+                )

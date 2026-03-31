@@ -42,10 +42,10 @@ class PlannerPhase1Tests(unittest.TestCase):
         plan = self.planner.create_plan(request)
         shopping_map = {item.name: item for item in plan.shopping_list}
 
-        self.assertIn("lentils", shopping_map)
-        self.assertIn("vegetable broth", shopping_map)
-        self.assertGreater(shopping_map["lentils"].quantity, 2.0)
-        self.assertGreater(shopping_map["vegetable broth"].quantity, 6.0)
+        self.assertIn("chickpeas", shopping_map)
+        self.assertIn("tomato", shopping_map)
+        self.assertGreater(shopping_map["chickpeas"].quantity, 2.0)
+        self.assertGreater(shopping_map["tomato"].quantity, 2.0)
 
     def test_budget_compliance_and_failure_when_budget_too_low(self) -> None:
         request = PlannerRequest(
@@ -104,12 +104,12 @@ class PlannerPhase1Tests(unittest.TestCase):
         request = PlannerRequest(
             weekly_budget=40.0,
             servings=2,
-            cuisine_preferences=("mediterranean",),
+            cuisine_preferences=("american",),
             allergies=(),
-            excluded_ingredients=(),
+            excluded_ingredients=("bread", "avocado", "banana", "yogurt", "granola", "milk", "peanut butter"),
             diet_restrictions=("vegan",),
             pantry_staples=("olive oil",),
-            max_prep_time_minutes=35,
+            max_prep_time_minutes=20,
             meals_per_day=1,
         )
 
