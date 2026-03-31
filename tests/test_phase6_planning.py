@@ -206,6 +206,51 @@ class SingleRecipeProvider(LocalRecipeProvider):
         )
 
 
+class MealStructureRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe(
+                recipe_id="breakfast-only",
+                title="Breakfast Only",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=300,
+                prep_time_minutes=10,
+                meal_types=("breakfast",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("breakfast base", 1.0, "item"),),
+                steps=("Cook breakfast.",),
+            ),
+            Recipe(
+                recipe_id="lunch-only",
+                title="Lunch Only",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=450,
+                prep_time_minutes=15,
+                meal_types=("lunch",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("lunch base", 1.0, "item"),),
+                steps=("Cook lunch.",),
+            ),
+            Recipe(
+                recipe_id="dinner-only",
+                title="Dinner Only",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=700,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("dinner base", 1.0, "item"),),
+                steps=("Cook dinner.",),
+            ),
+        )
+
+
 class PlanningPhase6Tests(unittest.TestCase):
     def test_daily_calorie_target_changes_recipe_selection(self) -> None:
         planner = WeeklyMealPlanner(
@@ -478,6 +523,68 @@ class PlanningPhase6Tests(unittest.TestCase):
 
         self.assertEqual(replaced_plan.meals[0].recipe.title, original_plan.meals[0].recipe.title)
         self.assertIn("same recipe was kept", replaced_plan.notes[-1].lower())
+
+    def test_breakfast_lunch_dinner_structure_uses_matching_meal_types(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=MealStructureRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "breakfast base": GroceryProduct("breakfast base", 1.0, "item", 1.0),
+                    "lunch base": GroceryProduct("lunch base", 1.0, "item", 1.0),
+                    "dinner base": GroceryProduct("dinner base", 1.0, "item", 1.0),
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=30.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=3,
+            meal_structure=("breakfast", "lunch", "dinner"),
+            daily_calorie_target_min=1400,
+            daily_calorie_target_max=1600,
+        )
+
+        plan = planner.create_plan(request)
+
+        self.assertEqual(plan.meals[0].recipe.title, "Breakfast Only")
+        self.assertEqual(plan.meals[1].recipe.title, "Lunch Only")
+        self.assertEqual(plan.meals[2].recipe.title, "Dinner Only")
+
+    def test_lunch_dinner_structure_excludes_breakfast_only_recipes(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=MealStructureRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "breakfast base": GroceryProduct("breakfast base", 1.0, "item", 1.0),
+                    "lunch base": GroceryProduct("lunch base", 1.0, "item", 1.0),
+                    "dinner base": GroceryProduct("dinner base", 1.0, "item", 1.0),
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=30.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=2,
+            meal_structure=("lunch", "dinner"),
+            daily_calorie_target_min=1000,
+            daily_calorie_target_max=1400,
+        )
+
+        plan = planner.create_plan(request)
+
+        self.assertTrue(all(meal.recipe.title != "Breakfast Only" for meal in plan.meals))
 
 
 if __name__ == "__main__":

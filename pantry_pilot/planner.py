@@ -152,7 +152,7 @@ class WeeklyMealPlanner:
         variety_profile = self._variety_profile(request)
         fixed_meals = [meal for meal in ordered_meals if meal is not target_meal]
         fixed_quantities = self._quantities_for_meals(fixed_meals, request, pantry_inventory)
-        slot_candidates = self._recipes_for_slot(candidates, request.meals_per_day, slot_number)
+        slot_candidates = self._recipes_for_slot(candidates, request, slot_number)
 
         replacement = self._select_replacement_recipe(
             slot_candidates,
@@ -173,7 +173,7 @@ class WeeklyMealPlanner:
             recipe = replacement if meal is target_meal else meal.recipe
             replaced_entries.append((meal.day, meal.slot, recipe))
 
-        replacement_label = f"{day_name(day_number)} {slot_label(request.meals_per_day, slot_number).lower()}"
+        replacement_label = f"{day_name(day_number)} {slot_label(request.meals_per_day, slot_number, request.meal_structure).lower()}"
         notes = list(existing_plan.notes)
         if replacement.title == target_meal.recipe.title:
             notes.append(f"No alternative fit {replacement_label}, so the same recipe was kept.")
@@ -220,7 +220,7 @@ class WeeklyMealPlanner:
         slot_number: int,
     ) -> tuple[Recipe, float, bool] | None:
         current_total = self._estimate_total_cost(purchased_quantities)
-        slot_candidates = self._recipes_for_slot(candidates, request.meals_per_day, slot_number)
+        slot_candidates = self._recipes_for_slot(candidates, request, slot_number)
         preferred_recipes = tuple(
             recipe
             for recipe in slot_candidates
@@ -332,15 +332,20 @@ class WeeklyMealPlanner:
     def _recipes_for_slot(
         self,
         candidates: tuple[Recipe, ...],
-        meals_per_day: int,
+        request: PlannerRequest,
         slot_number: int,
     ) -> tuple[Recipe, ...]:
-        desired_types = SLOT_LABELS.get(meals_per_day, ("meal",))
+        desired_types = self._meal_structure(request)
         desired = desired_types[min(slot_number - 1, len(desired_types) - 1)]
         matching = tuple(
             recipe for recipe in candidates if desired == "meal" or desired in recipe.meal_types
         )
         return matching or candidates
+
+    def _meal_structure(self, request: PlannerRequest) -> tuple[str, ...]:
+        if request.meal_structure:
+            return tuple(normalize_name(value) for value in request.meal_structure)
+        return SLOT_LABELS.get(request.meals_per_day, ("meal",))
 
     def _apply_recipe(
         self,
@@ -581,7 +586,7 @@ class WeeklyMealPlanner:
         for future_slot_number in range(slot_number + 1, request.meals_per_day + 1):
             projected_total += self._average_slot_calories(
                 candidates,
-                request.meals_per_day,
+                request,
                 future_slot_number,
                 request.servings,
             )
@@ -590,11 +595,11 @@ class WeeklyMealPlanner:
     def _average_slot_calories(
         self,
         candidates: tuple[Recipe, ...],
-        meals_per_day: int,
+        request: PlannerRequest,
         slot_number: int,
         servings: int,
     ) -> float:
-        slot_candidates = self._recipes_for_slot(candidates, meals_per_day, slot_number)
+        slot_candidates = self._recipes_for_slot(candidates, request, slot_number)
         if not slot_candidates:
             return 0.0
         total = sum(self._meal_calories(recipe, servings) for recipe in slot_candidates)
@@ -732,7 +737,7 @@ def day_name(day_number: int) -> str:
     return DAY_NAMES[day_number - 1]
 
 
-def slot_label(meals_per_day: int, slot_number: int) -> str:
-    desired_types = SLOT_LABELS.get(meals_per_day, ("meal",))
+def slot_label(meals_per_day: int, slot_number: int, meal_structure: tuple[str, ...] = ()) -> str:
+    desired_types = meal_structure or SLOT_LABELS.get(meals_per_day, ("meal",))
     desired = desired_types[min(slot_number - 1, len(desired_types) - 1)]
     return desired.title()

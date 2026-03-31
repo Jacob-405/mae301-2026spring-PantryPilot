@@ -12,6 +12,12 @@ st.set_page_config(page_title="PantryPilot", layout="wide")
 st.title("PantryPilot")
 st.write("Build a deterministic 7-day meal plan from local recipes and grocery prices.")
 
+MEAL_STRUCTURE_OPTIONS = {
+    "Breakfast + Lunch + Dinner": ("breakfast", "lunch", "dinner"),
+    "Lunch + Dinner": ("lunch", "dinner"),
+    "Dinner Only": ("dinner",),
+}
+
 FIELD_DEFAULTS = {
     "weekly_budget_input": 90.0,
     "servings_input": 2,
@@ -21,7 +27,7 @@ FIELD_DEFAULTS = {
     "diet_restrictions_input": "",
     "pantry_staples_input": "olive oil, cinnamon",
     "max_prep_time_input": 35,
-    "meals_per_day_input": 2,
+    "meal_structure_input": "Lunch + Dinner",
     "zip_code_input": "",
     "pricing_mode_input": "Mock pricing",
     "calorie_target_min_input": 1600,
@@ -39,7 +45,7 @@ PRESET_SCENARIOS = {
         "diet_restrictions_input": "",
         "pantry_staples_input": "olive oil, cinnamon",
         "max_prep_time_input": 35,
-        "meals_per_day_input": 2,
+        "meal_structure_input": "Lunch + Dinner",
         "pricing_mode_input": "Mock pricing",
         "calorie_target_min_input": 1800,
         "calorie_target_max_input": 2300,
@@ -54,7 +60,7 @@ PRESET_SCENARIOS = {
         "diet_restrictions_input": "vegetarian",
         "pantry_staples_input": "olive oil, garlic, onion",
         "max_prep_time_input": 30,
-        "meals_per_day_input": 2,
+        "meal_structure_input": "Lunch + Dinner",
         "pricing_mode_input": "Mock pricing",
         "calorie_target_min_input": 1700,
         "calorie_target_max_input": 2200,
@@ -69,7 +75,7 @@ PRESET_SCENARIOS = {
         "diet_restrictions_input": "",
         "pantry_staples_input": "olive oil, rice, black beans, chickpeas, salsa, canned tomatoes, garlic",
         "max_prep_time_input": 35,
-        "meals_per_day_input": 2,
+        "meal_structure_input": "Lunch + Dinner",
         "pricing_mode_input": "Mock pricing",
         "calorie_target_min_input": 1700,
         "calorie_target_max_input": 2300,
@@ -84,7 +90,7 @@ PRESET_SCENARIOS = {
         "diet_restrictions_input": "",
         "pantry_staples_input": "olive oil, cinnamon, garlic",
         "max_prep_time_input": 20,
-        "meals_per_day_input": 2,
+        "meal_structure_input": "Lunch + Dinner",
         "pricing_mode_input": "Mock pricing",
         "calorie_target_min_input": 1800,
         "calorie_target_max_input": 2400,
@@ -138,6 +144,10 @@ def calorie_status_label(daily_calories: int, minimum: int, maximum: int) -> tup
 
 def format_calorie_target(minimum: int, maximum: int) -> str:
     return f"{minimum:,} to {maximum:,} calories per day"
+
+
+def meal_structure_for_label(label: str) -> tuple[str, ...]:
+    return MEAL_STRUCTURE_OPTIONS[label]
 
 
 def validate_csv_field(raw_value: str, label: str) -> tuple[list[str], list[str]]:
@@ -315,6 +325,7 @@ def render_meal_plan(request: PlannerRequest, plan, planner: WeeklyMealPlanner, 
         if plan.selected_store:
             st.caption(f"Store: {plan.selected_store}")
         st.caption(f"Variety preference: {request.variety_preference.title()}")
+        st.caption("Meal structure: " + " + ".join(value.title() for value in request.meal_structure or ("meal",)))
     with summary_right:
         budget_status = "Within budget" if remaining_budget >= 0 else "Over budget"
         with st.container(border=True):
@@ -346,7 +357,7 @@ def render_meal_plan(request: PlannerRequest, plan, planner: WeeklyMealPlanner, 
                 meal_title, meal_stats = st.columns((3, 2))
                 with meal_title:
                     st.markdown(
-                        f"**{slot_label(request.meals_per_day, meal.slot)} {meal.slot}**: {meal.recipe.title}"
+                        f"**{slot_label(request.meals_per_day, meal.slot, request.meal_structure)} {meal.slot}**: {meal.recipe.title}"
                     )
                     st.caption(
                         "Cuisine: "
@@ -370,7 +381,8 @@ def render_meal_plan(request: PlannerRequest, plan, planner: WeeklyMealPlanner, 
                             st.session_state["current_plan"] = updated_plan
                             st.session_state["current_request"] = request
                             st.session_state["plan_feedback"] = (
-                                f"Updated {day_name(meal.day)} {slot_label(request.meals_per_day, meal.slot).lower()}."
+                                f"Updated {day_name(meal.day)} "
+                                f"{slot_label(request.meals_per_day, meal.slot, request.meal_structure).lower()}."
                             )
                             st.session_state["plan_error"] = ""
                             st.rerun()
@@ -508,13 +520,14 @@ with st.form("weekly-planner-form"):
             step=1,
             key="servings_input",
         )
-        meals_per_day = st.number_input(
-            "Meals per day",
-            min_value=1,
-            max_value=3,
-            step=1,
-            key="meals_per_day_input",
+        meal_structure_label = st.selectbox(
+            "Meal structure",
+            tuple(MEAL_STRUCTURE_OPTIONS.keys()),
+            key="meal_structure_input",
+            help="Choose which meal slots PantryPilot should plan each day.",
         )
+        selected_meal_structure = meal_structure_for_label(meal_structure_label)
+        st.caption("Daily slots: " + " + ".join(value.title() for value in selected_meal_structure))
         max_prep_time = st.number_input(
             "Max prep time (minutes)",
             min_value=10,
@@ -571,7 +584,7 @@ if submitted:
     validation_errors, validation_warnings = validate_request_inputs(
         weekly_budget=float(weekly_budget),
         max_prep_time=int(max_prep_time),
-        meals_per_day=int(meals_per_day),
+        meals_per_day=len(selected_meal_structure),
         calorie_target_min=st.session_state["calorie_target_min_input"],
         calorie_target_max=st.session_state["calorie_target_max_input"],
         csv_inputs={
@@ -601,7 +614,8 @@ if submitted:
         diet_restrictions=parse_csv_list(diet_restrictions),
         pantry_staples=parse_csv_list(pantry_staples),
         max_prep_time_minutes=int(max_prep_time),
-        meals_per_day=int(meals_per_day),
+        meals_per_day=len(selected_meal_structure),
+        meal_structure=selected_meal_structure,
         zip_code=zip_code.strip(),
         pricing_mode=normalize_name(pricing_mode),
         store_location_id=location_options.get(selected_store_label, ""),

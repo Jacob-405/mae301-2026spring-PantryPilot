@@ -56,6 +56,7 @@ class PlannerRequest:
     pantry_staples: tuple[str, ...]
     max_prep_time_minutes: int
     meals_per_day: int
+    meal_structure: tuple[str, ...] = ()
     zip_code: str = ""
     pricing_mode: str = "mock"
     store_location_id: str = ""
