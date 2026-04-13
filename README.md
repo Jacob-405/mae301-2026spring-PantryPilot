@@ -7,6 +7,12 @@ PantryPilot is a deterministic weekly meal-planning app built with Streamlit. It
 
 If Kroger credentials are missing, no nearby store is selected, or Kroger pricing requests fail, PantryPilot automatically falls back to mock pricing.
 
+## Phase 2 Submission
+
+Our Phase 2 progress report and technical demonstration can be found here:
+
+[Phase 2 Progress Report](docs/phase2_report.md)
+
 ## Requirements
 
 - Python 3.12
@@ -96,9 +102,3 @@ Reference links:
 
 - [Kroger Public APIs (Postman)](https://www.postman.com/kroger/the-kroger-co-s-public-workspace/documentation/ki6utqb/kroger-public-apis)
 - [Kroger Developers](https://developer.kroger.com/)
-
-## Phase 2 Submission
-
-Our Phase 2 progress report and technical demonstration can be found here:
-
-[Phase 2 Progress Report](docs/phase2_report.md)
