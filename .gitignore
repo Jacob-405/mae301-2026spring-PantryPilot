@@ -11,3 +11,8 @@ nanogpt/data/processed/
 
 # model outputs
 nanogpt/outputs/
+mvp/data/raw/kaggle-recipes/
+
+mvp/data/processed/recipes.imported.json
+
+mvp/data/processed/recipes.imported.stats.json
