@@ -84,6 +84,16 @@ Phase 1 and Phase 2 coverage includes:
 - provider fallback behavior
 - missing-price handling
 
+## Milestone 1 dataset scaffold
+
+The repo now includes a dataset scaffold for a larger local recipe corpus without changing the current planner behavior:
+
+- `mvp/data/raw/` stores original source files
+- `mvp/data/processed/` stores normalized recipe records after validation
+- `pantry_pilot/data_pipeline/` defines the normalized schema and validation helpers
+
+The Streamlit app still uses the existing sample recipe provider in this milestone.
+
 ## Kroger API references
 
 PantryPilot's Phase 2 implementation follows Kroger's public API documentation for:
