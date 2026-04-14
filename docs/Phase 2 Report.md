@@ -32,3 +32,6 @@ as a real MVP and that we have made substantial technical progress toward the pr
 proposed in Phase 1.
 
 Our next steps are to keep improving the user experience and make the recommendations more polished.
+
+## Technical Demonstration:
+https://youtu.be/H8XXh2Yxoq4
