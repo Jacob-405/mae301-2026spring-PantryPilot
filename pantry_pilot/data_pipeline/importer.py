@@ -40,6 +40,8 @@ class ImportResult:
     imported_recipes: tuple[NormalizedRecipe, ...]
     rejected_rows: tuple[ImportRejection, ...]
     output_path: str
+    stats_path: str
+    stats: dict
     validation_issues: tuple[ValidationIssue, ...] = ()
 
 
@@ -64,12 +66,17 @@ def import_recipes_from_file(
     output_file.parent.mkdir(parents=True, exist_ok=True)
     payload = {"recipes": [_recipe_to_dict(recipe) for recipe in clustered_recipes]}
     output_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    stats_file = output_file.with_suffix(".stats.json")
+    stats = _build_import_stats(raw_rows, clustered_recipes, rejections)
+    stats_file.write_text(json.dumps(stats, indent=2), encoding="utf-8")
 
     validation_issues = validate_recipe_collection(tuple(clustered_recipes))
     return ImportResult(
         imported_recipes=tuple(clustered_recipes),
         rejected_rows=tuple(rejections),
         output_path=str(output_file),
+        stats_path=str(stats_file),
+        stats=stats,
         validation_issues=validation_issues,
     )
 
@@ -329,3 +336,24 @@ def _recipe_to_dict(recipe: NormalizedRecipe) -> dict:
     payload["diet_tags"] = sorted(recipe.diet_tags)
     payload["allergens"]["allergens"] = None if recipe.allergens.allergens is None else sorted(recipe.allergens.allergens)
     return payload
+
+
+def _build_import_stats(
+    raw_rows: tuple[dict, ...],
+    imported_recipes: tuple[NormalizedRecipe, ...],
+    rejections: list[ImportRejection],
+) -> dict:
+    reason_counts: dict[str, int] = {}
+    for rejection in rejections:
+        for reason in rejection.reasons:
+            reason_counts[reason] = reason_counts.get(reason, 0) + 1
+    ordered_reasons = [
+        {"reason": reason, "count": count}
+        for reason, count in sorted(reason_counts.items(), key=lambda item: (-item[1], item[0]))
+    ]
+    return {
+        "raw_count": len(raw_rows),
+        "accepted_count": len(imported_recipes),
+        "rejected_count": len(rejections),
+        "common_reject_reasons": ordered_reasons,
+    }

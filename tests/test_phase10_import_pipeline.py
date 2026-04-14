@@ -45,6 +45,10 @@ class Phase10ImportPipelineTests(unittest.TestCase):
             self.assertEqual(recipe.ingredients[0].unit, "item")
             self.assertEqual(recipe.calories.calories_per_serving, 410)
             self.assertTrue(processed_path.exists())
+            self.assertTrue(Path(result.stats_path).exists())
+            self.assertEqual(result.stats["raw_count"], 1)
+            self.assertEqual(result.stats["accepted_count"], 1)
+            self.assertEqual(result.stats["rejected_count"], 0)
 
             written = json.loads(processed_path.read_text(encoding="utf-8"))
             self.assertEqual(written["recipes"][0]["title"], "Tomato Rice Bowl")
@@ -152,6 +156,8 @@ class Phase10ImportPipelineTests(unittest.TestCase):
             self.assertEqual(result.imported_recipes, ())
             self.assertEqual(len(result.rejected_rows), 1)
             self.assertIn("Missing instructions.", result.rejected_rows[0].reasons)
+            self.assertEqual(result.stats["rejected_count"], 1)
+            self.assertTrue(any(item["reason"] == "Missing instructions." for item in result.stats["common_reject_reasons"]))
 
     def test_import_rejects_too_many_unmapped_ingredients(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
