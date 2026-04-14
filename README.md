@@ -11,7 +11,7 @@ If Kroger credentials are missing, no nearby store is selected, or Kroger pricin
 
 Our Phase 2 progress report and technical demonstration can be found here:
 
-[Phase 2 Progress Report](docs/phase2_report.md)
+[Phase 2 Progress Report](docs/Phase 2 Report.md)
 
 ## Requirements
 
