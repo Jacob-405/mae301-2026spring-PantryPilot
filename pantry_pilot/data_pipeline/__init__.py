@@ -14,7 +14,9 @@ from pantry_pilot.data_pipeline.importer import (
     ImportConfig,
     ImportRejection,
     ImportResult,
+    import_kaggle_recipe_directory,
     import_recipes_from_file,
+    import_recipes_from_files,
 )
 from pantry_pilot.data_pipeline.validation import (
     DataQualitySeverity,
@@ -55,7 +57,9 @@ __all__ = [
     "assert_valid_recipe_collection",
     "build_diversity_metadata",
     "compare_recipes",
+    "import_kaggle_recipe_directory",
     "import_recipes_from_file",
+    "import_recipes_from_files",
     "validate_recipe",
     "validate_recipe_collection",
 ]

@@ -29,7 +29,18 @@ class UnitCatalogEntry:
 _INGREDIENT_ENTRIES: tuple[IngredientCatalogEntry, ...] = (
     IngredientCatalogEntry("avocado", aliases=("avocados",), supported_units=("item",), allergens=frozenset()),
     IngredientCatalogEntry("banana", supported_units=("item",), allergens=frozenset()),
-    IngredientCatalogEntry("bell pepper", aliases=("bell peppers",), supported_units=("item",), allergens=frozenset()),
+    IngredientCatalogEntry(
+        "bell pepper",
+        aliases=("bell peppers", "green bell pepper", "red bell pepper"),
+        supported_units=("item",),
+        allergens=frozenset(),
+    ),
+    IngredientCatalogEntry(
+        "black pepper",
+        aliases=("ground black pepper", "black pepper to taste"),
+        supported_units=("tsp", "tbsp"),
+        allergens=frozenset(),
+    ),
     IngredientCatalogEntry(
         "black beans",
         aliases=("black bean", "black beans canned"),
@@ -54,6 +65,7 @@ _INGREDIENT_ENTRIES: tuple[IngredientCatalogEntry, ...] = (
     ),
     IngredientCatalogEntry(
         "chicken breast",
+        aliases=("skinless boneless chicken breast halves", "boneless skinless chicken breasts", "chicken breast halves"),
         supported_units=("lb",),
         allergens=frozenset(),
         diet_flags=IngredientDietFlags(meat=True),
@@ -63,6 +75,12 @@ _INGREDIENT_ENTRIES: tuple[IngredientCatalogEntry, ...] = (
     IngredientCatalogEntry("cinnamon", supported_units=("tsp",), allergens=frozenset()),
     IngredientCatalogEntry("corn", aliases=("corn kernels",), supported_units=("cup",), allergens=frozenset()),
     IngredientCatalogEntry("cucumber", supported_units=("item",), allergens=frozenset()),
+    IngredientCatalogEntry(
+        "cumin",
+        aliases=("ground cumin",),
+        supported_units=("tsp", "tbsp"),
+        allergens=frozenset(),
+    ),
     IngredientCatalogEntry("curry powder", supported_units=("tbsp",), allergens=frozenset()),
     IngredientCatalogEntry(
         "eggs",
@@ -70,6 +88,12 @@ _INGREDIENT_ENTRIES: tuple[IngredientCatalogEntry, ...] = (
         supported_units=("item",),
         allergens=frozenset({"egg"}),
         diet_flags=IngredientDietFlags(animal_product=True),
+    ),
+    IngredientCatalogEntry(
+        "flour",
+        aliases=("all purpose flour", "all-purpose flour"),
+        supported_units=("cup", "tbsp"),
+        allergens=frozenset({"gluten"}),
     ),
     IngredientCatalogEntry(
         "feta",
@@ -80,8 +104,19 @@ _INGREDIENT_ENTRIES: tuple[IngredientCatalogEntry, ...] = (
     IngredientCatalogEntry("frozen berries", supported_units=("cup",), allergens=frozenset()),
     IngredientCatalogEntry(
         "garlic",
-        aliases=("cloves garlic", "garlic clove", "garlic cloves"),
-        supported_units=("clove",),
+        aliases=("cloves garlic", "garlic clove", "garlic cloves", "minced garlic", "garlic minced"),
+        supported_units=("clove", "tsp", "tbsp"),
+        allergens=frozenset(),
+    ),
+    IngredientCatalogEntry(
+        "garlic powder",
+        supported_units=("tsp", "tbsp"),
+        allergens=frozenset(),
+    ),
+    IngredientCatalogEntry(
+        "ginger",
+        aliases=("fresh ginger root", "ground ginger", "minced fresh ginger root"),
+        supported_units=("tsp", "tbsp"),
         allergens=frozenset(),
     ),
     IngredientCatalogEntry("granola", supported_units=("cup",), allergens=frozenset({"gluten"})),
@@ -109,23 +144,46 @@ _INGREDIENT_ENTRIES: tuple[IngredientCatalogEntry, ...] = (
     IngredientCatalogEntry("olive oil", supported_units=("tbsp",), allergens=frozenset()),
     IngredientCatalogEntry(
         "onion",
-        aliases=("red onion", "yellow onion"),
-        supported_units=("item",),
+        aliases=("red onion", "yellow onion", "chopped onion", "diced onion", "white onion", "sweet onion"),
+        supported_units=("item", "cup"),
+        allergens=frozenset(),
+    ),
+    IngredientCatalogEntry(
+        "oregano",
+        aliases=("dried oregano",),
+        supported_units=("tsp", "tbsp"),
         allergens=frozenset(),
     ),
     IngredientCatalogEntry(
         "parmesan",
-        supported_units=("cup",),
+        aliases=("grated parmesan cheese",),
+        supported_units=("cup", "tbsp"),
         allergens=frozenset({"dairy"}),
         diet_flags=IngredientDietFlags(animal_product=True),
     ),
     IngredientCatalogEntry("pasta", aliases=("penne pasta",), supported_units=("oz",), allergens=frozenset({"gluten"})),
+    IngredientCatalogEntry(
+        "paprika",
+        supported_units=("tsp", "tbsp"),
+        allergens=frozenset(),
+    ),
     IngredientCatalogEntry("peanut butter", supported_units=("tbsp",), allergens=frozenset({"peanut"})),
-    IngredientCatalogEntry("rice", supported_units=("cup",), allergens=frozenset()),
+    IngredientCatalogEntry(
+        "rice",
+        aliases=("white rice", "cooked white rice", "uncooked white rice"),
+        supported_units=("cup",),
+        allergens=frozenset(),
+    ),
     IngredientCatalogEntry(
         "rolled oats",
         aliases=("old fashioned oats", "rolled oat"),
         supported_units=("cup",),
+        allergens=frozenset(),
+    ),
+    IngredientCatalogEntry(
+        "salt",
+        aliases=("kosher salt", "sea salt", "salt and ground black pepper to taste"),
+        supported_units=("tsp", "tbsp"),
         allergens=frozenset(),
     ),
     IngredientCatalogEntry("salsa", supported_units=("cup",), allergens=frozenset()),
@@ -139,8 +197,24 @@ _INGREDIENT_ENTRIES: tuple[IngredientCatalogEntry, ...] = (
         allergens=frozenset(),
     ),
     IngredientCatalogEntry(
+        "tomato sauce",
+        supported_units=("can", "cup"),
+        allergens=frozenset(),
+    ),
+    IngredientCatalogEntry(
         "vegetable broth",
         aliases=("veggie broth",),
+        supported_units=("cup",),
+        allergens=frozenset(),
+    ),
+    IngredientCatalogEntry(
+        "vegetable oil",
+        aliases=("canola oil",),
+        supported_units=("tbsp", "cup"),
+        allergens=frozenset(),
+    ),
+    IngredientCatalogEntry(
+        "water",
         supported_units=("cup",),
         allergens=frozenset(),
     ),
@@ -151,6 +225,12 @@ _INGREDIENT_ENTRIES: tuple[IngredientCatalogEntry, ...] = (
         diet_flags=IngredientDietFlags(animal_product=True),
     ),
     IngredientCatalogEntry("zucchini", aliases=("zucchinis",), supported_units=("item",), allergens=frozenset()),
+    IngredientCatalogEntry(
+        "butter",
+        supported_units=("tbsp", "cup"),
+        allergens=frozenset({"dairy"}),
+        diet_flags=IngredientDietFlags(animal_product=True),
+    ),
 )
 
 _UNIT_ENTRIES: tuple[UnitCatalogEntry, ...] = (
@@ -159,8 +239,10 @@ _UNIT_ENTRIES: tuple[UnitCatalogEntry, ...] = (
     UnitCatalogEntry("clove", aliases=("cloves",)),
     UnitCatalogEntry("cup", aliases=("cups",)),
     UnitCatalogEntry("item", aliases=("items",)),
+    UnitCatalogEntry("package", aliases=("packages",)),
     UnitCatalogEntry("lb", aliases=("lbs", "pound", "pounds")),
     UnitCatalogEntry("oz", aliases=("ounce", "ounces", "oz.", "oz")),
+    UnitCatalogEntry("pinch", aliases=("pinches",)),
     UnitCatalogEntry("slice", aliases=("slices",)),
     UnitCatalogEntry("stalk", aliases=("stalks",)),
     UnitCatalogEntry("tbsp", aliases=("tablespoon", "tablespoons", "tbsp")),

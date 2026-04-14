@@ -94,6 +94,17 @@ class Phase2ProviderTests(unittest.TestCase):
             self.assertEqual(len(recipes), 1)
             self.assertEqual(recipes[0].title, "Processed Rice Bowl")
 
+    def test_local_recipe_provider_falls_back_when_processed_dataset_is_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            processed_path = Path(tmpdir) / "recipes.imported.json"
+            processed_path.write_text(json.dumps({"recipes": []}), encoding="utf-8")
+            provider = LocalRecipeProvider(processed_dataset_path=processed_path)
+
+            recipes = provider.list_recipes()
+
+            self.assertTrue(recipes)
+            self.assertIn("Avocado Toast", {recipe.title for recipe in recipes})
+
     def test_missing_credentials_fall_back_to_mock_provider(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
             context = build_pricing_context(
