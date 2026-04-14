@@ -5,16 +5,19 @@ import json
 import os
 import ssl
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 from typing import Protocol
 from urllib import error, parse, request
 
 from pantry_pilot.models import GroceryLocation, GroceryProduct, Recipe
-from pantry_pilot.normalization import normalize_name
+from pantry_pilot.normalization import normalize_ingredient_name, normalize_name, normalize_unit
 from pantry_pilot.sample_data import sample_recipes
 
 
 KROGER_API_BASE_URL = "https://api.kroger.com/v1"
 KROGER_TOKEN_URL = "https://api.kroger.com/v1/connect/oauth2/token"
+DEFAULT_PROCESSED_RECIPES_PATH = Path("mvp/data/processed/recipes.imported.json")
 
 
 class GroceryProvider(Protocol):
@@ -28,8 +31,145 @@ class GroceryProvider(Protocol):
 
 
 class LocalRecipeProvider:
+    def __init__(self, processed_dataset_path: str | Path | None = None) -> None:
+        self.processed_dataset_path = Path(processed_dataset_path) if processed_dataset_path is not None else DEFAULT_PROCESSED_RECIPES_PATH
+
     def list_recipes(self) -> tuple[Recipe, ...]:
+        processed_recipes = load_processed_recipes(self.processed_dataset_path)
+        if processed_recipes:
+            return processed_recipes
         return sample_recipes()
+
+
+@lru_cache(maxsize=8)
+def load_processed_recipes(processed_dataset_path: str | Path) -> tuple[Recipe, ...]:
+    dataset_path = Path(processed_dataset_path)
+    if not dataset_path.exists() or not dataset_path.is_file():
+        return ()
+    try:
+        payload = json.loads(dataset_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ()
+    rows = payload.get("recipes")
+    if not isinstance(rows, list):
+        return ()
+
+    recipes: list[Recipe] = []
+    for row in rows:
+        recipe = _load_processed_recipe_row(row)
+        if recipe is None:
+            return ()
+        recipes.append(recipe)
+    return tuple(sorted(recipes, key=lambda recipe: recipe.title))
+
+
+def _load_processed_recipe_row(row: object) -> Recipe | None:
+    if not isinstance(row, dict):
+        return None
+    required_fields = (
+        "recipe_id",
+        "title",
+        "cuisine",
+        "servings",
+        "prep_time_minutes",
+        "meal_types",
+        "diet_tags",
+        "allergens",
+        "ingredients",
+        "steps",
+    )
+    if any(field not in row for field in required_fields):
+        return None
+    ingredients = _load_processed_ingredients(row.get("ingredients"))
+    steps = _load_processed_steps(row.get("steps"))
+    meal_types = _load_string_tuple(row.get("meal_types"))
+    diet_tags = frozenset(_load_string_tuple(row.get("diet_tags")))
+    allergens = _load_processed_allergens(row.get("allergens"))
+    if not ingredients or not steps or not meal_types:
+        return None
+    try:
+        recipe_id = str(row["recipe_id"]).strip()
+        title = str(row["title"]).strip()
+        cuisine = normalize_name(str(row["cuisine"]))
+        servings = int(row["servings"])
+        prep_time_minutes = int(row["prep_time_minutes"])
+        calories_per_serving = _load_processed_calories(row.get("calories"))
+    except (TypeError, ValueError):
+        return None
+    if not recipe_id or not title or servings <= 0 or prep_time_minutes < 0:
+        return None
+    return Recipe(
+        recipe_id=recipe_id,
+        title=title,
+        cuisine=cuisine,
+        base_servings=servings,
+        estimated_calories_per_serving=calories_per_serving,
+        prep_time_minutes=prep_time_minutes,
+        meal_types=meal_types,
+        diet_tags=diet_tags,
+        allergens=allergens,
+        ingredients=ingredients,
+        steps=steps,
+    )
+
+
+def _load_processed_ingredients(value: object) -> tuple:
+    if not isinstance(value, list):
+        return ()
+    ingredients = []
+    for item in value:
+        if not isinstance(item, dict):
+            return ()
+        try:
+            name = normalize_ingredient_name(str(item.get("canonical_name") or item.get("name") or ""))
+            quantity = float(item["quantity"])
+            unit = normalize_unit(str(item["unit"]))
+        except (KeyError, TypeError, ValueError):
+            return ()
+        if not name or quantity <= 0 or not unit:
+            return ()
+        from pantry_pilot.models import RecipeIngredient
+
+        ingredients.append(RecipeIngredient(name=name, quantity=quantity, unit=unit))
+    return tuple(ingredients)
+
+
+def _load_processed_steps(value: object) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        return ()
+    steps = tuple(str(item).strip() for item in value if str(item).strip())
+    return steps
+
+
+def _load_string_tuple(value: object) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        return ()
+    return tuple(normalize_name(str(item)) for item in value if normalize_name(str(item)))
+
+
+def _load_processed_allergens(value: object) -> frozenset[str] | None:
+    if not isinstance(value, dict):
+        return None
+    completeness = normalize_name(str(value.get("completeness", "unknown")))
+    allergens_value = value.get("allergens")
+    if completeness != "complete":
+        return None
+    if allergens_value is None:
+        return None
+    if not isinstance(allergens_value, list):
+        return None
+    return frozenset(normalize_name(str(item)) for item in allergens_value if normalize_name(str(item)))
+
+
+def _load_processed_calories(value: object) -> int:
+    if not isinstance(value, dict):
+        return 0
+    calories_per_serving = value.get("calories_per_serving")
+    try:
+        calories = int(calories_per_serving)
+    except (TypeError, ValueError):
+        return 0
+    return max(calories, 0)
 
 
 class ProviderUnavailableError(RuntimeError):
