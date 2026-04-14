@@ -48,6 +48,54 @@ class Phase10ImportPipelineTests(unittest.TestCase):
 
             written = json.loads(processed_path.read_text(encoding="utf-8"))
             self.assertEqual(written["recipes"][0]["title"], "Tomato Rice Bowl")
+            self.assertIn("similarity", written["recipes"][0])
+            self.assertIn("diversity", written["recipes"][0])
+
+    def test_import_assigns_duplicate_cluster_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            raw_path = Path(tmpdir) / "recipes.json"
+            processed_path = Path(tmpdir) / "recipes.processed.json"
+            raw_payload = {
+                "recipes": [
+                    {
+                        "source_recipe_id": "demo-1",
+                        "title": "Tomato Rice Bowl",
+                        "cuisine": "Mediterranean",
+                        "meal_types": "lunch,dinner",
+                        "servings": 4,
+                        "allergen_completeness": "complete",
+                        "allergens": [],
+                        "ingredients": [
+                            {"name": "tomatoes", "quantity": 2, "unit": "items"},
+                            {"name": "rice", "quantity": 2, "unit": "cups"},
+                        ],
+                        "instructions": ["Cook rice.", "Top with tomato."],
+                    },
+                    {
+                        "source_recipe_id": "demo-2",
+                        "title": "Tomato Rice Bowl",
+                        "cuisine": "Mediterranean",
+                        "meal_types": "lunch,dinner",
+                        "servings": 4,
+                        "allergen_completeness": "complete",
+                        "allergens": [],
+                        "ingredients": [
+                            {"name": "tomatoes", "quantity": 2, "unit": "items"},
+                            {"name": "rice", "quantity": 2, "unit": "cups"},
+                        ],
+                        "instructions": ["Cook rice.", "Top with tomato."],
+                    },
+                ]
+            }
+            raw_path.write_text(json.dumps(raw_payload), encoding="utf-8")
+
+            result = import_recipes_from_file(raw_path, processed_path=processed_path)
+
+            self.assertEqual(len(result.imported_recipes), 2)
+            cluster_ids = {recipe.similarity.cluster_id for recipe in result.imported_recipes}
+            self.assertEqual(len(cluster_ids), 1)
+            duplicate_recipe = next(recipe for recipe in result.imported_recipes if recipe.similarity.exact_duplicate_of)
+            self.assertTrue(duplicate_recipe.similarity.exact_duplicate_of)
 
     def test_csv_import_supports_json_encoded_nested_columns(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:

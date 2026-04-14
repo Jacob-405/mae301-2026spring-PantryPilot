@@ -25,6 +25,13 @@ from pantry_pilot.data_pipeline.validation import (
     validate_recipe,
     validate_recipe_collection,
 )
+from pantry_pilot.data_pipeline.similarity import (
+    RecipeSimilarityMatch,
+    annotate_recipe_similarity,
+    build_diversity_metadata,
+    compare_recipes,
+)
+from pantry_pilot.data_pipeline.schema import SimilarityMetadata
 
 __all__ = [
     "AllergenAssessment",
@@ -40,9 +47,14 @@ __all__ = [
     "NormalizedRecipe",
     "SchemaValidationError",
     "SourceMetadata",
+    "SimilarityMetadata",
     "ValidationIssue",
+    "RecipeSimilarityMatch",
+    "annotate_recipe_similarity",
     "assert_valid_recipe",
     "assert_valid_recipe_collection",
+    "build_diversity_metadata",
+    "compare_recipes",
     "import_recipes_from_file",
     "validate_recipe",
     "validate_recipe_collection",

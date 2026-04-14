@@ -67,6 +67,16 @@ class DiversityMetadata:
 
 
 @dataclass(frozen=True)
+class SimilarityMetadata:
+    cluster_id: str = ""
+    exact_duplicate_of: str = ""
+    related_recipe_ids: tuple[str, ...] = ()
+    representative_recipe_id: str = ""
+    similarity_score_to_representative: float = 0.0
+    similarity_signals: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class NormalizedRecipe:
     recipe_id: str
     title: str
@@ -84,5 +94,5 @@ class NormalizedRecipe:
     total_time_minutes: int = 0
     calories: CalorieEstimate = field(default_factory=lambda: CalorieEstimate(calories_per_serving=None))
     diversity: DiversityMetadata = field(default_factory=DiversityMetadata)
+    similarity: SimilarityMetadata = field(default_factory=SimilarityMetadata)
     normalized_search_text: str = ""
-

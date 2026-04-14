@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 from pantry_pilot.data_pipeline.schema import (
@@ -13,6 +13,7 @@ from pantry_pilot.data_pipeline.schema import (
     NormalizedRecipe,
     SourceMetadata,
 )
+from pantry_pilot.data_pipeline.similarity import annotate_recipe_similarity, build_diversity_metadata
 from pantry_pilot.data_pipeline.validation import ValidationIssue, validate_recipe_collection
 from pantry_pilot.ingredient_catalog import canonical_ingredient_name, lookup_ingredient_metadata
 from pantry_pilot.normalization import normalize_name, normalize_unit, parse_csv_list
@@ -53,14 +54,20 @@ def import_recipes_from_file(
     raw_rows = _load_raw_rows(raw_file)
     recipes, rejections = _normalize_rows(raw_rows, raw_file, active_config)
 
+    enriched_recipes = tuple(
+        replace(recipe, diversity=build_diversity_metadata(recipe))
+        for recipe in recipes
+    )
+    clustered_recipes = annotate_recipe_similarity(enriched_recipes)
+
     output_file = Path(processed_path) if processed_path is not None else raw_file.parent.parent / "processed" / DEFAULT_PROCESSED_FILENAME
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"recipes": [_recipe_to_dict(recipe) for recipe in recipes]}
+    payload = {"recipes": [_recipe_to_dict(recipe) for recipe in clustered_recipes]}
     output_file.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
-    validation_issues = validate_recipe_collection(tuple(recipes))
+    validation_issues = validate_recipe_collection(tuple(clustered_recipes))
     return ImportResult(
-        imported_recipes=tuple(recipes),
+        imported_recipes=tuple(clustered_recipes),
         rejected_rows=tuple(rejections),
         output_path=str(output_file),
         validation_issues=validation_issues,
