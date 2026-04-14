@@ -1,73 +1,6 @@
 from __future__ import annotations
 
-
-INGREDIENT_ALIASES = {
-    "avocados": "avocado",
-    "bell peppers": "bell pepper",
-    "black bean": "black beans",
-    "black beans canned": "black beans",
-    "broccoli florets": "broccoli",
-    "carrots": "carrot",
-    "canned chickpeas": "chickpeas",
-    "cherry tomatoes": "tomato",
-    "cloves garlic": "garlic",
-    "corn kernels": "corn",
-    "egg": "eggs",
-    "garlic clove": "garlic",
-    "garlic cloves": "garlic",
-    "lemons": "lemon",
-    "limes": "lime",
-    "old fashioned oats": "rolled oats",
-    "penne pasta": "pasta",
-    "red onion": "onion",
-    "roma tomatoes": "tomato",
-    "rolled oat": "rolled oats",
-    "tomatoes": "tomato",
-    "veggie broth": "vegetable broth",
-    "yellow onion": "onion",
-    "zucchinis": "zucchini",
-}
-
-UNIT_ALIASES = {
-    "block": "block",
-    "blocks": "block",
-    "can": "can",
-    "cans": "can",
-    "clove": "clove",
-    "cloves": "clove",
-    "cup": "cup",
-    "cups": "cup",
-    "item": "item",
-    "items": "item",
-    "ounce": "oz",
-    "ounces": "oz",
-    "oz.": "oz",
-    "oz": "oz",
-    "lb": "lb",
-    "pound": "lb",
-    "pounds": "lb",
-    "slice": "slice",
-    "slices": "slice",
-    "stalk": "stalk",
-    "stalks": "stalk",
-    "tbsp": "tbsp",
-    "tablespoon": "tbsp",
-    "tablespoons": "tbsp",
-    "teaspoon": "tsp",
-    "teaspoons": "tsp",
-    "tsp": "tsp",
-}
-
-UNIT_CONVERSION_FACTORS = {
-    ("tsp", "tbsp"): 1.0 / 3.0,
-    ("tbsp", "tsp"): 3.0,
-    ("tbsp", "cup"): 1.0 / 16.0,
-    ("cup", "tbsp"): 16.0,
-    ("tsp", "cup"): 1.0 / 48.0,
-    ("cup", "tsp"): 48.0,
-    ("oz", "lb"): 1.0 / 16.0,
-    ("lb", "oz"): 16.0,
-}
+from pantry_pilot.ingredient_catalog import UNIT_CONVERSION_FACTORS, canonical_ingredient_name, canonical_unit_name
 
 
 def normalize_name(value: str) -> str:
@@ -78,13 +11,11 @@ def normalize_name(value: str) -> str:
 
 
 def normalize_ingredient_name(value: str) -> str:
-    normalized = normalize_name(value)
-    return INGREDIENT_ALIASES.get(normalized, normalized)
+    return canonical_ingredient_name(value)
 
 
 def normalize_unit(value: str) -> str:
-    normalized = normalize_name(value)
-    return UNIT_ALIASES.get(normalized, normalized)
+    return canonical_unit_name(value)
 
 
 def convert_unit_quantity(quantity: float, from_unit: str, to_unit: str) -> float | None:

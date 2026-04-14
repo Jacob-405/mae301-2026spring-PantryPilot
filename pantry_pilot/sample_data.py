@@ -1,63 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from pantry_pilot.models import Recipe, RecipeIngredient
+from pantry_pilot.ingredient_catalog import lookup_ingredient_metadata
 from pantry_pilot.normalization import normalize_ingredient_name, normalize_name, normalize_unit
-
-
-@dataclass(frozen=True)
-class IngredientProfile:
-    allergens: frozenset[str] | None
-    animal_product: bool = False
-    meat: bool = False
-
-
-INGREDIENT_PROFILES: dict[str, IngredientProfile] = {
-    "avocado": IngredientProfile(frozenset()),
-    "banana": IngredientProfile(frozenset()),
-    "bell pepper": IngredientProfile(frozenset()),
-    "black beans": IngredientProfile(frozenset()),
-    "bread": IngredientProfile(frozenset({"gluten"})),
-    "broccoli": IngredientProfile(frozenset()),
-    "canned tomatoes": IngredientProfile(frozenset()),
-    "carrot": IngredientProfile(frozenset()),
-    "celery": IngredientProfile(frozenset()),
-    "cheddar cheese": IngredientProfile(frozenset({"dairy"}), animal_product=True),
-    "chicken breast": IngredientProfile(frozenset(), meat=True),
-    "chickpeas": IngredientProfile(frozenset()),
-    "chili powder": IngredientProfile(frozenset()),
-    "cinnamon": IngredientProfile(frozenset()),
-    "corn": IngredientProfile(frozenset()),
-    "cucumber": IngredientProfile(frozenset()),
-    "curry powder": IngredientProfile(frozenset()),
-    "eggs": IngredientProfile(frozenset({"egg"}), animal_product=True),
-    "feta": IngredientProfile(frozenset({"dairy"}), animal_product=True),
-    "frozen berries": IngredientProfile(frozenset()),
-    "garlic": IngredientProfile(frozenset()),
-    "granola": IngredientProfile(frozenset({"gluten"})),
-    "ground turkey": IngredientProfile(frozenset(), meat=True),
-    "honey": IngredientProfile(frozenset(), animal_product=True),
-    "lemon": IngredientProfile(frozenset()),
-    "lentils": IngredientProfile(frozenset()),
-    "lime": IngredientProfile(frozenset()),
-    "milk": IngredientProfile(frozenset({"dairy"}), animal_product=True),
-    "olive oil": IngredientProfile(frozenset()),
-    "onion": IngredientProfile(frozenset()),
-    "parmesan": IngredientProfile(frozenset({"dairy"}), animal_product=True),
-    "pasta": IngredientProfile(frozenset({"gluten"})),
-    "peanut butter": IngredientProfile(frozenset({"peanut"})),
-    "rice": IngredientProfile(frozenset()),
-    "rolled oats": IngredientProfile(frozenset()),
-    "salsa": IngredientProfile(frozenset()),
-    "soy sauce": IngredientProfile(frozenset({"soy"})),
-    "spinach": IngredientProfile(frozenset()),
-    "tofu": IngredientProfile(frozenset({"soy"})),
-    "tomato": IngredientProfile(frozenset()),
-    "vegetable broth": IngredientProfile(frozenset()),
-    "yogurt": IngredientProfile(frozenset({"dairy"}), animal_product=True),
-    "zucchini": IngredientProfile(frozenset()),
-}
 
 REQUIRED_RECIPE_FIELDS = (
     "title",
@@ -867,7 +812,7 @@ def _build_ingredient(record: dict[str, str | float]) -> RecipeIngredient:
 def _derive_allergens(ingredient_names: tuple[str, ...]) -> frozenset[str] | None:
     allergens: set[str] = set()
     for ingredient_name in ingredient_names:
-        profile = INGREDIENT_PROFILES.get(ingredient_name)
+        profile = lookup_ingredient_metadata(ingredient_name)
         if profile is None or profile.allergens is None:
             return None
         allergens.update(profile.allergens)
@@ -880,16 +825,16 @@ def _derive_diet_tags(ingredient_names: tuple[str, ...], extra_tags: tuple[str, 
         for tag in extra_tags
         if normalize_name(tag) not in SAFE_DERIVED_DIET_TAGS
     }
-    profiles: list[IngredientProfile] = []
+    profiles = []
     for ingredient_name in ingredient_names:
-        profile = INGREDIENT_PROFILES.get(ingredient_name)
+        profile = lookup_ingredient_metadata(ingredient_name)
         if profile is None or profile.allergens is None:
             return frozenset(sorted(tags))
         profiles.append(profile)
 
-    if all(not profile.meat for profile in profiles):
+    if all(not profile.diet_flags.meat for profile in profiles):
         tags.add("vegetarian")
-    if all(not profile.meat and not profile.animal_product for profile in profiles):
+    if all(not profile.diet_flags.meat and not profile.diet_flags.animal_product for profile in profiles):
         tags.add("vegan")
     if all("gluten" not in profile.allergens for profile in profiles):
         tags.add("gluten-free")
