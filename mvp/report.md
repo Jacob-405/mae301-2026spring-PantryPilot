@@ -1,6 +1,6 @@
 MVP Report
 
-o Suggested structure:
+Suggested structure:
 1. Executive Summary: Problem, solution, and what your MVP actually
 does.
 2. User & Use Case: Clear persona and usage narrative.
