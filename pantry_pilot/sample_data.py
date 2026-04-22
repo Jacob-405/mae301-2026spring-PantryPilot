@@ -3,6 +3,7 @@ from __future__ import annotations
 from pantry_pilot.models import Recipe, RecipeIngredient
 from pantry_pilot.ingredient_catalog import lookup_ingredient_metadata
 from pantry_pilot.normalization import normalize_ingredient_name, normalize_name, normalize_unit
+from pantry_pilot.recipe_estimation import estimate_recipe_nutrition
 
 REQUIRED_RECIPE_FIELDS = (
     "title",
@@ -786,11 +787,12 @@ def sample_recipes() -> tuple[Recipe, ...]:
 def _build_recipe(record: dict) -> Recipe:
     ingredients = tuple(_build_ingredient(item) for item in record["ingredients"])
     canonical_names = tuple(ingredient.name for ingredient in ingredients)
+    base_servings = int(record["base_servings"])
     return Recipe(
         recipe_id=_recipe_id_from_title(record["title"]),
         title=record["title"],
         cuisine=normalize_name(record["cuisine"]),
-        base_servings=int(record["base_servings"]),
+        base_servings=base_servings,
         estimated_calories_per_serving=int(record["estimated_calories_per_serving"]),
         prep_time_minutes=int(record["prep_time_minutes"]),
         meal_types=tuple(normalize_name(value) for value in record["meal_types"]),
@@ -798,6 +800,7 @@ def _build_recipe(record: dict) -> Recipe:
         allergens=_derive_allergens(canonical_names),
         ingredients=ingredients,
         steps=tuple(record["steps"]),
+        estimated_nutrition_per_serving=estimate_recipe_nutrition(ingredients, base_servings).per_serving,
     )
 
 

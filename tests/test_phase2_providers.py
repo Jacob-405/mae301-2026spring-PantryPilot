@@ -105,6 +105,73 @@ class Phase2ProviderTests(unittest.TestCase):
             self.assertTrue(recipes)
             self.assertIn("Avocado Toast", {recipe.title for recipe in recipes})
 
+    def test_processed_dataset_preserves_unknown_calories_and_prep_time_when_no_support_layer_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            processed_path = Path(tmpdir) / "recipes.imported.json"
+            processed_path.write_text(
+                json.dumps(
+                    {
+                        "recipes": [
+                            {
+                                "recipe_id": "unknown-metadata-bowl",
+                                "title": "Unknown Metadata Bowl",
+                                "cuisine": "mediterranean",
+                                "servings": 2,
+                                "prep_time_minutes": 0,
+                                "meal_types": ["dinner"],
+                                "diet_tags": ["vegan", "gluten-free"],
+                                "allergens": {"allergens": [], "completeness": "complete"},
+                                "ingredients": [
+                                    {"canonical_name": "mystery ingredient", "quantity": 2, "unit": "cups"},
+                                ],
+                                "steps": ["Cook it."],
+                                "calories": {"calories_per_serving": None},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            recipe = LocalRecipeProvider(processed_dataset_path=processed_path).list_recipes()[0]
+
+            self.assertIsNone(recipe.estimated_calories_per_serving)
+            self.assertIsNone(recipe.prep_time_minutes)
+
+    def test_processed_dataset_estimates_calories_from_supported_ingredients(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            processed_path = Path(tmpdir) / "recipes.imported.json"
+            processed_path.write_text(
+                json.dumps(
+                    {
+                        "recipes": [
+                            {
+                                "recipe_id": "estimated-calorie-bowl",
+                                "title": "Estimated Calorie Bowl",
+                                "cuisine": "mediterranean",
+                                "servings": 2,
+                                "prep_time_minutes": 0,
+                                "meal_types": ["dinner"],
+                                "diet_tags": ["vegan", "gluten-free"],
+                                "allergens": {"allergens": [], "completeness": "complete"},
+                                "ingredients": [
+                                    {"canonical_name": "rice", "quantity": 2, "unit": "cups"},
+                                    {"canonical_name": "black beans", "quantity": 1, "unit": "can"},
+                                ],
+                                "steps": ["Cook rice.", "Warm the beans."],
+                                "calories": {"calories_per_serving": None},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            recipe = LocalRecipeProvider(processed_dataset_path=processed_path).list_recipes()[0]
+
+            self.assertEqual(recipe.estimated_calories_per_serving, 320)
+            self.assertIsNone(recipe.prep_time_minutes)
+
     def test_missing_credentials_fall_back_to_mock_provider(self) -> None:
         with patch.dict(os.environ, {}, clear=True):
             context = build_pricing_context(

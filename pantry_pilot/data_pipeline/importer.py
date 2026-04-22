@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import ast
 import csv
+import ctypes
 import json
+import os
 import re
+import time
+import uuid
 from dataclasses import asdict, dataclass, replace
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pantry_pilot.data_pipeline.schema import (
@@ -26,6 +31,9 @@ from pantry_pilot.normalization import normalize_name, normalize_unit, parse_csv
 
 
 DEFAULT_PROCESSED_FILENAME = "recipes.imported.json"
+DEFAULT_KAGGLE_PROCESSED_FILENAME = "kaggle-recipes.imported.json"
+DEFAULT_RECIPE_NLG_PROCESSED_FILENAME = "recipenlg.imported.json"
+DEFAULT_RECIPE_NLG_MAX_OUTPUT_RECIPES = 500
 UNICODE_FRACTIONS = {
     "¼": "1/4",
     "½": "1/2",
@@ -47,11 +55,11 @@ UNICODE_FRACTIONS = {
     "⅞": "7/8",
 }
 MEAL_KEYWORD_GROUPS = {
-    "breakfast": ("breakfast", "brunch", "pancake", "waffle", "oatmeal", "omelet", "omelette", "scramble", "parfait", "smoothie"),
+    "breakfast": ("breakfast", "brunch", "pancake", "pancakes", "waffle", "waffles", "oatmeal", "omelet", "omelette", "scramble", "parfait", "smoothie", "muffin", "muffins"),
     "dessert": ("dessert", "desserts", "cookie", "cake", "pie", "brownie", "cobbler", "ice cream", "frosting"),
-    "drink": ("drink", "drinks", "beverage", "cocktail", "smoothie bowl"),
+    "drink": ("drink", "drinks", "beverage", "cocktail", "smoothie bowl", "tea"),
     "lunch": ("lunch", "sandwich", "wrap", "salad"),
-    "dinner": ("dinner", "main dish", "main dishes", "pasta", "skillet", "soup", "stew", "chili", "curry", "stir fry"),
+    "dinner": ("dinner", "main dish", "main dishes", "bowl", "pasta", "skillet", "soup", "stew", "chili", "curry", "stir fry"),
 }
 GENERIC_CUISINE_SEGMENTS = frozenset(
     {
@@ -111,6 +119,11 @@ NON_SUBSTANTIAL_IMPORT_INGREDIENTS = frozenset(
 class ImportConfig:
     max_unmapped_ingredient_fraction: float = 0.25
     reject_unknown_allergens: bool = True
+    max_output_recipes: int | None = None
+    max_recorded_rejections: int = 500
+    row_limit: int | None = None
+    progress_every_rows: int = 100_000
+    checkpoint_every_rows: int = 100_000
 
 
 @dataclass(frozen=True)
@@ -214,6 +227,10 @@ def _is_kaggle_test_schema(row: dict) -> bool:
     return "Name" in row and "Ingredients" in row and "Directions" in row
 
 
+def _is_recipenlg_schema(row: dict) -> bool:
+    return "title" in row and "ingredients" in row and "directions" in row and "NER" in row and "link" in row
+
+
 def import_kaggle_recipe_directory(
     raw_dir: str | Path,
     *,
@@ -233,9 +250,264 @@ def import_kaggle_recipe_directory(
         raise ValueError(f"No Kaggle recipe files found in {directory}")
     return import_recipes_from_files(
         paths,
-        processed_path=processed_path,
+        processed_path=(
+            processed_path
+            if processed_path is not None
+            else _default_processed_dir_for(paths[0]) / DEFAULT_KAGGLE_PROCESSED_FILENAME
+        ),
         config=config,
     )
+
+
+def import_recipenlg_dataset(
+    raw_path: str | Path,
+    *,
+    processed_path: str | Path | None = None,
+    config: ImportConfig | None = None,
+) -> ImportResult:
+    raw_file = Path(raw_path)
+    active_config = config or ImportConfig()
+    output_file = (
+        Path(processed_path)
+        if processed_path is not None
+        else _default_processed_dir_for(raw_file) / DEFAULT_RECIPE_NLG_PROCESSED_FILENAME
+    )
+    stats_file = output_file.with_suffix(".stats.json")
+    checkpoint_file = output_file.with_suffix(".checkpoint.json")
+    lock_path, run_id = _acquire_import_lock(output_file)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    output_cap = (
+        active_config.max_output_recipes
+        if active_config.max_output_recipes is not None
+        else DEFAULT_RECIPE_NLG_MAX_OUTPUT_RECIPES
+    )
+    accepted_total = 0
+    raw_count = 0
+    reason_counts: dict[str, int] = {}
+    recorded_rejections: list[ImportRejection] = []
+    imported_recipes: list[NormalizedRecipe] = []
+    started_at = _utcnow()
+    print(
+        "RecipeNLG import started:",
+        json.dumps(
+            {
+                "run_id": run_id,
+                "source": str(raw_file),
+                "output_path": str(output_file),
+                "stats_path": str(stats_file),
+                "checkpoint_path": str(checkpoint_file),
+                "row_limit": active_config.row_limit,
+            }
+        ),
+        flush=True,
+    )
+
+    try:
+        with raw_file.open("r", encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            for index, row in enumerate(reader):
+                if active_config.row_limit is not None and raw_count >= active_config.row_limit:
+                    break
+                raw_count += 1
+                source_recipe_id, title = _extract_row_identity(dict(row), index)
+                try:
+                    normalized = _normalize_row(dict(row), raw_file, source_recipe_id, active_config)
+                except RowRejectedError as exc:
+                    for reason in exc.reasons:
+                        reason_counts[reason] = reason_counts.get(reason, 0) + 1
+                    if len(recorded_rejections) < active_config.max_recorded_rejections:
+                        recorded_rejections.append(
+                            ImportRejection(
+                                source_recipe_id=source_recipe_id,
+                                title=title,
+                                reasons=tuple(exc.reasons),
+                            )
+                        )
+                    _maybe_report_recipenlg_progress(raw_count, accepted_total, active_config)
+                    _maybe_write_recipenlg_checkpoint(
+                        checkpoint_file=checkpoint_file,
+                        config=active_config,
+                        raw_count=raw_count,
+                        accepted_count=accepted_total,
+                        written_count=len(imported_recipes),
+                        imported_recipes=tuple(imported_recipes),
+                        reason_counts=reason_counts,
+                        source_names=(raw_file.name,),
+                        run_id=run_id,
+                        started_at=started_at,
+                        output_file=output_file,
+                    )
+                    continue
+
+                accepted_total += 1
+                if len(imported_recipes) < output_cap:
+                    imported_recipes.append(normalized)
+                _maybe_report_recipenlg_progress(raw_count, accepted_total, active_config)
+                _maybe_write_recipenlg_checkpoint(
+                    checkpoint_file=checkpoint_file,
+                    config=active_config,
+                    raw_count=raw_count,
+                    accepted_count=accepted_total,
+                    written_count=len(imported_recipes),
+                    imported_recipes=tuple(imported_recipes),
+                    reason_counts=reason_counts,
+                    source_names=(raw_file.name,),
+                    run_id=run_id,
+                    started_at=started_at,
+                    output_file=output_file,
+                )
+
+        _write_recipenlg_stage_checkpoint(
+            checkpoint_file=checkpoint_file,
+            raw_count=raw_count,
+            accepted_count=accepted_total,
+            written_count=len(imported_recipes),
+            imported_recipes=tuple(imported_recipes),
+            reason_counts=reason_counts,
+            source_names=(raw_file.name,),
+            run_id=run_id,
+            started_at=started_at,
+            output_file=output_file,
+            row_limit=active_config.row_limit,
+            stage="building_diversity_metadata",
+        )
+        print(
+            "RecipeNLG finalizing:",
+            json.dumps({"stage": "building_diversity_metadata", "recipes": len(imported_recipes)}),
+            flush=True,
+        )
+        enriched_recipes = tuple(
+            replace(recipe, diversity=build_diversity_metadata(recipe))
+            for recipe in imported_recipes
+        )
+        _write_recipenlg_stage_checkpoint(
+            checkpoint_file=checkpoint_file,
+            raw_count=raw_count,
+            accepted_count=accepted_total,
+            written_count=len(imported_recipes),
+            imported_recipes=enriched_recipes,
+            reason_counts=reason_counts,
+            source_names=(raw_file.name,),
+            run_id=run_id,
+            started_at=started_at,
+            output_file=output_file,
+            row_limit=active_config.row_limit,
+            stage="annotating_similarity",
+        )
+        print(
+            "RecipeNLG finalizing:",
+            json.dumps({"stage": "annotating_similarity", "recipes": len(enriched_recipes)}),
+            flush=True,
+        )
+        clustered_recipes = annotate_recipe_similarity(
+            enriched_recipes,
+            progress_every_recipes=500,
+            progress_callback=lambda event: print("RecipeNLG similarity progress:", json.dumps(event), flush=True),
+        )
+        payload = {"recipes": [_recipe_to_dict(recipe) for recipe in clustered_recipes]}
+        stats = _build_streaming_import_stats(
+            raw_count=raw_count,
+            accepted_count=accepted_total,
+            written_count=len(clustered_recipes),
+            imported_recipes=clustered_recipes,
+            reason_counts=reason_counts,
+            source_names=(raw_file.name,),
+        )
+        stats.update(
+            {
+                "status": "completed",
+                "run_id": run_id,
+                "started_at": started_at,
+                "completed_at": _utcnow(),
+                "row_limit": active_config.row_limit,
+                "checkpoint_path": str(checkpoint_file),
+            }
+        )
+        checkpoint_payload = dict(stats)
+        checkpoint_payload["status"] = "completed"
+        checkpoint_payload["stage"] = "completed"
+        checkpoint_payload["output_path"] = str(output_file)
+        _write_recipenlg_stage_checkpoint(
+            checkpoint_file=checkpoint_file,
+            raw_count=raw_count,
+            accepted_count=accepted_total,
+            written_count=len(clustered_recipes),
+            imported_recipes=tuple(clustered_recipes),
+            reason_counts=reason_counts,
+            source_names=(raw_file.name,),
+            run_id=run_id,
+            started_at=started_at,
+            output_file=output_file,
+            row_limit=active_config.row_limit,
+            stage="validating_collection",
+        )
+        print(
+            "RecipeNLG finalizing:",
+            json.dumps({"stage": "validating_collection", "recipes": len(clustered_recipes)}),
+            flush=True,
+        )
+        validation_issues = validate_recipe_collection(tuple(clustered_recipes))
+        _write_recipenlg_stage_checkpoint(
+            checkpoint_file=checkpoint_file,
+            raw_count=raw_count,
+            accepted_count=accepted_total,
+            written_count=len(clustered_recipes),
+            imported_recipes=tuple(clustered_recipes),
+            reason_counts=reason_counts,
+            source_names=(raw_file.name,),
+            run_id=run_id,
+            started_at=started_at,
+            output_file=output_file,
+            row_limit=active_config.row_limit,
+            stage="writing_output_files",
+        )
+        print(
+            "RecipeNLG finalizing:",
+            json.dumps(
+                {
+                    "stage": "writing_output_files",
+                    "recipes": len(clustered_recipes),
+                    "output_path": str(output_file),
+                }
+            ),
+            flush=True,
+        )
+        _write_json_atomic(output_file, payload)
+        _write_json_atomic(stats_file, stats)
+        _write_json_atomic(checkpoint_file, checkpoint_payload)
+        return ImportResult(
+            imported_recipes=tuple(clustered_recipes),
+            rejected_rows=tuple(recorded_rejections),
+            output_path=str(output_file),
+            stats_path=str(stats_file),
+            stats=stats,
+            validation_issues=validation_issues,
+        )
+    except Exception as exc:
+        failure_stats = _build_streaming_import_stats(
+            raw_count=raw_count,
+            accepted_count=accepted_total,
+            written_count=len(imported_recipes),
+            imported_recipes=tuple(imported_recipes),
+            reason_counts=reason_counts,
+            source_names=(raw_file.name,),
+        )
+        failure_stats.update(
+            {
+                "status": "failed",
+                "stage": "failed",
+                "run_id": run_id,
+                "started_at": started_at,
+                "failed_at": _utcnow(),
+                "row_limit": active_config.row_limit,
+                "output_path": str(output_file),
+                "error": str(exc),
+            }
+        )
+        _write_json_atomic(checkpoint_file, failure_stats)
+        raise
+    finally:
+        _release_import_lock(lock_path)
 
 
 def _load_raw_rows(raw_file: Path) -> tuple[dict, ...]:
@@ -309,6 +581,10 @@ def _extract_row_identity(row: dict, index: int) -> tuple[str, str]:
         source_recipe_id = str(row.get("Row") or row.get("url") or f"row-{index + 1}").strip()
         title = str(row.get("Name", "")).strip()
         return source_recipe_id or f"row-{index + 1}", title
+    if _is_recipenlg_schema(row):
+        source_recipe_id = str(row.get("") or row.get("link") or f"row-{index + 1}").strip()
+        title = str(row.get("title", "")).strip()
+        return source_recipe_id or f"row-{index + 1}", title
     source_recipe_id = str(row.get("source_recipe_id") or row.get("recipe_id") or f"row-{index + 1}").strip()
     title = str(row.get("title", "")).strip()
     return source_recipe_id, title
@@ -324,6 +600,8 @@ def _normalize_row(
         return _normalize_kaggle_train_row(row, raw_file, source_recipe_id, config)
     if _is_kaggle_test_schema(row):
         return _normalize_kaggle_test_row(row, raw_file, source_recipe_id, config)
+    if _is_recipenlg_schema(row):
+        return _normalize_recipenlg_row(row, raw_file, source_recipe_id, config)
 
     reasons: list[str] = []
     title = str(row.get("title", "")).strip()
@@ -497,6 +775,35 @@ def _normalize_kaggle_test_row(
     )
 
 
+def _normalize_recipenlg_row(
+    row: dict,
+    raw_file: Path,
+    source_recipe_id: str,
+    config: ImportConfig,
+) -> NormalizedRecipe:
+    title = str(row.get("title", "")).strip()
+    ingredient_rows = _parse_recipenlg_ingredients(str(row.get("ingredients", "")), str(row.get("NER", "")))
+    step_rows = _parse_python_list_of_strings(str(row.get("directions", "")))
+    meal_types = _derive_recipenlg_meal_types(title, step_rows)
+    servings = _derive_servings_from_steps(step_rows)
+    return _finalize_normalized_recipe(
+        title=title,
+        ingredient_rows=ingredient_rows,
+        step_rows=step_rows,
+        cuisine=_derive_cuisine_from_text(title),
+        meal_types=meal_types,
+        diet_tags=frozenset(),
+        calories=CalorieEstimate(calories_per_serving=None),
+        servings=servings,
+        prep_time=0,
+        cook_time=0,
+        total_time=0,
+        raw_file=raw_file,
+        source_recipe_id=source_recipe_id,
+        config=config,
+    )
+
+
 def _finalize_normalized_recipe(
     *,
     title: str,
@@ -537,9 +844,10 @@ def _finalize_normalized_recipe(
     for ingredient_index, ingredient_row in enumerate(filtered_ingredient_rows):
         display_name = str(ingredient_row.get("name", "")).strip()
         quantity = _coerce_float(ingredient_row.get("quantity"), default=0.0)
-        resolved = _resolve_catalog_ingredient(display_name)
+        catalog_hint = str(ingredient_row.get("catalog_hint", "")).strip()
+        resolved = _resolve_catalog_ingredient(catalog_hint or display_name)
         canonical_name = resolved[0] if resolved is not None else canonical_ingredient_name(display_name)
-        metadata = resolved[1] if resolved is not None else lookup_ingredient_metadata(display_name)
+        metadata = resolved[1] if resolved is not None else lookup_ingredient_metadata(catalog_hint or display_name)
         unit = _normalize_import_unit(str(ingredient_row.get("unit", "")), metadata)
         if metadata is not None:
             mapped_count += 1
@@ -696,6 +1004,27 @@ def _parse_kaggle_test_ingredients(value: str) -> tuple[dict, ...]:
     return tuple(ingredient_rows)
 
 
+def _parse_recipenlg_ingredients(ingredients_value: str, ner_value: str) -> tuple[dict, ...]:
+    ingredient_rows = _parse_python_list(ingredients_value)
+    ner_rows = tuple(
+        str(item).strip()
+        for item in _parse_python_list(ner_value)
+        if isinstance(item, str) and str(item).strip()
+    )
+    parsed_rows: list[dict] = []
+    for index, row in enumerate(ingredient_rows):
+        if not isinstance(row, str):
+            continue
+        parsed = _parse_free_text_ingredient(row)
+        if parsed is None:
+            parsed = {"name": row.strip(), "quantity": 1.0, "unit": "item"}
+        catalog_hint = _resolve_recipenlg_catalog_hint(row, ner_rows, index)
+        if catalog_hint:
+            parsed["catalog_hint"] = catalog_hint
+        parsed_rows.append(parsed)
+    return tuple(parsed_rows)
+
+
 def _parse_python_list_of_strings(value: str) -> tuple[str, ...]:
     rows = _parse_python_list(value)
     return tuple(str(item).strip() for item in rows if str(item).strip())
@@ -725,6 +1054,7 @@ def _parse_free_text_ingredient(fragment: str) -> dict | None:
         return None
     cleaned = cleaned.replace("Optional:", "").replace("optional:", "").strip()
     cleaned = cleaned.replace("to taste", "").replace("as needed", "").strip(" ,")
+    cleaned = re.sub(r"\(\s*\d+[^\)]*\)", " ", cleaned)
     normalized = _normalize_fraction_text(cleaned)
     tokens = normalized.split()
     if not tokens:
@@ -739,17 +1069,11 @@ def _parse_free_text_ingredient(fragment: str) -> dict | None:
     remainder = tokens[quantity_token_count:]
     if not remainder:
         return None
-    unit_token_count = 1
-    unit = _normalize_kaggle_unit_text(remainder[0])
-    for lookahead in (2, 3):
-        if len(remainder) >= lookahead:
-            candidate_unit = _normalize_kaggle_unit_text(" ".join(remainder[:lookahead]))
-            if candidate_unit in {"can", "package"}:
-                unit = candidate_unit
-                unit_token_count = lookahead
-                break
+    unit, unit_token_count = _extract_unit_from_tokens(remainder)
     if unit == "item":
         name_tokens = remainder
+        if unit_token_count:
+            name_tokens = remainder[unit_token_count:]
     else:
         name_tokens = remainder[unit_token_count:]
     name = " ".join(name_tokens).strip(" -")
@@ -758,19 +1082,69 @@ def _parse_free_text_ingredient(fragment: str) -> dict | None:
     return {"name": name, "quantity": quantity, "unit": unit}
 
 
+def _extract_unit_from_tokens(tokens: list[str]) -> tuple[str, int]:
+    if not tokens:
+        return "item", 0
+    normalized_tokens = [normalize_name(token) for token in tokens]
+    container_tokens = {
+        "bag",
+        "bags",
+        "bottle",
+        "bottles",
+        "box",
+        "boxes",
+        "carton",
+        "cartons",
+        "envelope",
+        "envelopes",
+        "jar",
+        "jars",
+        "package",
+        "packages",
+        "pkg",
+        "pkgs",
+    }
+    size_tokens = {"small", "medium", "large"}
+    if len(normalized_tokens) >= 2 and normalized_tokens[0] in size_tokens and normalized_tokens[1] in container_tokens:
+        return "item", 2
+    if normalized_tokens[0] in container_tokens:
+        return "item", 1
+    unit_token_count = 1
+    unit = _normalize_kaggle_unit_text(tokens[0])
+    for lookahead in (3, 2):
+        if len(tokens) >= lookahead:
+            candidate_unit = _normalize_kaggle_unit_text(" ".join(tokens[:lookahead]))
+            if candidate_unit != "item" or normalize_name(tokens[lookahead - 1]) in container_tokens:
+                return candidate_unit, lookahead
+    return unit, unit_token_count
+
+
 def _normalize_kaggle_unit_text(unit_text: str) -> str:
     normalized = normalize_name(unit_text)
     if not normalized:
         return "item"
+    if "fluid ounce" in normalized or re.search(r"\b\d+\s*ounce\b", normalized):
+        return "oz"
+    if normalized in {"c", "cupful"}:
+        return "cup"
+    if normalized in {"pkg", "pkgs", "package", "packages"}:
+        return "package"
     if "can" in normalized:
         return "can"
     if "package" in normalized:
         return "package"
     if "pinch" in normalized:
         return "pinch"
+    if normalized in {"jar", "jars", "carton", "cartons", "box", "boxes", "bottle", "bottles", "bag", "bags", "envelope", "envelopes"}:
+        return "item"
+    if normalized in {"wedge", "wedges", "inch", "inches"}:
+        return "item"
     if normalized in {"small", "medium", "large", "head"}:
         return "item"
-    return normalize_unit(normalized)
+    canonical = normalize_unit(normalized)
+    if canonical in {"block", "can", "clove", "cup", "item", "lb", "oz", "package", "pinch", "slice", "stalk", "tbsp", "tsp"}:
+        return canonical
+    return "item"
 
 
 def _normalize_import_unit(raw_unit: str, metadata: object | None) -> str:
@@ -822,17 +1196,97 @@ def _derive_cuisine_from_path(value: str) -> str:
 
 def _derive_meal_types(title: str, cuisine_path: str) -> tuple[str, ...]:
     combined = " ".join(filter(None, [normalize_name(title), normalize_name(cuisine_path)]))
-    if any(keyword in combined for keyword in MEAL_KEYWORD_GROUPS["dessert"]):
+    normalized_path = normalize_name(cuisine_path)
+    if any(
+        label in normalized_path
+        for label in (
+            "applesauce recipes",
+            "crisps and crumbles recipes",
+            "dips and spreads recipes",
+            "sauces and condiments",
+            "sauces",
+        )
+    ):
         return ()
-    if any(keyword in combined for keyword in MEAL_KEYWORD_GROUPS["drink"]):
-        return ()
-    if any(keyword in combined for keyword in MEAL_KEYWORD_GROUPS["breakfast"]):
+    if any(
+        label in normalized_path
+        for label in (
+            "breakfast and brunch",
+            "breakfast bread recipes",
+            "muffin recipes",
+            "pancake recipes",
+            "quick bread recipes",
+            "smoothie recipes",
+        )
+    ):
         return ("breakfast",)
-    if any(keyword in combined for keyword in MEAL_KEYWORD_GROUPS["lunch"]):
+    if _contains_meal_keyword(combined, MEAL_KEYWORD_GROUPS["dessert"]):
+        return ()
+    if _contains_meal_keyword(combined, MEAL_KEYWORD_GROUPS["breakfast"]):
+        return ("breakfast",)
+    if _contains_meal_keyword(combined, MEAL_KEYWORD_GROUPS["drink"]):
+        return ()
+    if _contains_meal_keyword(combined, MEAL_KEYWORD_GROUPS["lunch"]):
         return ("lunch", "dinner")
-    if any(keyword in combined for keyword in MEAL_KEYWORD_GROUPS["dinner"]):
+    if _contains_meal_keyword(combined, MEAL_KEYWORD_GROUPS["dinner"]):
         return ("dinner",)
+    return ()
+
+
+def _derive_recipenlg_meal_types(title: str, steps: tuple[str, ...]) -> tuple[str, ...]:
+    combined = " ".join(filter(None, [normalize_name(title), " ".join(normalize_name(step) for step in steps[:2])]))
+    if _contains_meal_keyword(combined, MEAL_KEYWORD_GROUPS["dessert"]):
+        return ()
+    if _contains_meal_keyword(combined, MEAL_KEYWORD_GROUPS["drink"]):
+        return ()
+    if _contains_meal_keyword(combined, MEAL_KEYWORD_GROUPS["breakfast"]):
+        return ("breakfast",)
+    if _contains_meal_keyword(combined, MEAL_KEYWORD_GROUPS["lunch"]):
+        return ("lunch", "dinner")
     return ("dinner",)
+
+
+def _contains_meal_keyword(text: str, keywords: tuple[str, ...]) -> bool:
+    tokens = tuple(normalize_name(text).split())
+    for keyword in keywords:
+        keyword_tokens = tuple(normalize_name(keyword).split())
+        if _contains_token_sequence(tokens, keyword_tokens):
+            return True
+    return False
+
+
+def _derive_cuisine_from_text(title: str) -> str:
+    normalized_title = normalize_name(title)
+    cuisine_keywords = (
+        ("italian", "italian"),
+        ("mexican", "mexican"),
+        ("greek", "greek"),
+        ("indian", "indian"),
+        ("thai", "thai"),
+        ("chinese", "chinese"),
+        ("japanese", "japanese"),
+        ("mediterranean", "mediterranean"),
+        ("french", "french"),
+        ("american", "american"),
+    )
+    for keyword, cuisine in cuisine_keywords:
+        if keyword in normalized_title:
+            return cuisine
+    return "unknown"
+
+
+def _derive_servings_from_steps(steps: tuple[str, ...]) -> int:
+    combined = " ".join(steps)
+    patterns = (
+        r"\b(?:yield|yields|yielding)\s+(\d+)\b",
+        r"\bserves?\s+(\d+)\b",
+        r"\bmakes?\s+(\d+)\b",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, combined, flags=re.IGNORECASE)
+        if match:
+            return max(1, int(match.group(1)))
+    return 4
 
 
 def _coerce_allergen_assessment(allergens_value: object, completeness_value: object) -> AllergenAssessment:
@@ -967,6 +1421,30 @@ def _resolve_catalog_ingredient(display_name: str) -> tuple[str, object] | None:
     return best_match[0], best_match[1]
 
 
+def _resolve_recipenlg_catalog_hint(
+    ingredient_text: str,
+    ner_rows: tuple[str, ...],
+    index: int,
+) -> str:
+    if index < len(ner_rows):
+        return ner_rows[index]
+    normalized_ingredient = normalize_name(ingredient_text)
+    best_hint = ""
+    best_length = 0
+    for ner_value in ner_rows:
+        normalized_ner = normalize_name(ner_value)
+        if not normalized_ner:
+            continue
+        if normalized_ner in normalized_ingredient or _contains_token_sequence(
+            tuple(normalized_ingredient.split()),
+            tuple(normalized_ner.split()),
+        ):
+            if len(normalized_ner.split()) > best_length:
+                best_hint = ner_value
+                best_length = len(normalized_ner.split())
+    return best_hint
+
+
 def _ingredient_lookup_variants(display_name: str) -> tuple[str, ...]:
     normalized = normalize_name(display_name)
     if not normalized:
@@ -980,24 +1458,53 @@ def _ingredient_lookup_variants(display_name: str) -> tuple[str, ...]:
         if token
         not in {
             "and",
+            "beaten",
+            "bite",
+            "bite-size",
+            "bite-sized",
             "boneless",
             "broken",
+            "chopped",
+            "cooked",
+            "cored",
+            "cubed",
             "chunks",
             "cut",
             "diced",
             "divided",
             "drained",
+            "extra",
             "fresh",
+            "finely",
+            "frozen",
             "ground",
             "halves",
             "into",
             "large",
             "matchsticks",
+            "melted",
             "minced",
+            "more",
+            "or",
+            "packed",
+            "peeled",
+            "pieces",
+            "pitted",
+            "pounded",
+            "quartered",
+            "reduced",
+            "seeded",
+            "sodium",
             "skinless",
             "sliced",
+            "softened",
+            "such",
+            "sweet",
+            "tart",
             "thinly",
             "to",
+            "virgin",
+            "with",
         }
     ]
     if stripped_tokens:
@@ -1061,3 +1568,235 @@ def _build_import_stats(
             for cuisine, count in sorted(cuisine_counts.items(), key=lambda item: (-item[1], item[0]))
         ],
     }
+
+
+def _build_streaming_import_stats(
+    *,
+    raw_count: int,
+    accepted_count: int,
+    written_count: int,
+    imported_recipes: tuple[NormalizedRecipe, ...],
+    reason_counts: dict[str, int],
+    source_names: tuple[str, ...] = (),
+) -> dict:
+    meal_type_counts: dict[str, int] = {}
+    cuisine_counts: dict[str, int] = {}
+    for recipe in imported_recipes:
+        for meal_type in recipe.meal_types:
+            meal_type_counts[meal_type] = meal_type_counts.get(meal_type, 0) + 1
+        cuisine_counts[recipe.cuisine] = cuisine_counts.get(recipe.cuisine, 0) + 1
+    ordered_reasons = [
+        {"reason": reason, "count": count}
+        for reason, count in sorted(reason_counts.items(), key=lambda item: (-item[1], item[0]))
+    ]
+    return {
+        "sources": list(source_names),
+        "raw_count": raw_count,
+        "accepted_count": accepted_count,
+        "written_count": written_count,
+        "rejected_count": raw_count - accepted_count,
+        "common_reject_reasons": ordered_reasons,
+        "meal_type_distribution": [
+            {"meal_type": meal_type, "count": count}
+            for meal_type, count in sorted(meal_type_counts.items(), key=lambda item: (-item[1], item[0]))
+        ],
+        "cuisine_distribution": [
+            {"cuisine": cuisine, "count": count}
+            for cuisine, count in sorted(cuisine_counts.items(), key=lambda item: (-item[1], item[0]))
+        ],
+    }
+
+
+def _utcnow() -> str:
+    return datetime.now(UTC).isoformat()
+
+
+def _import_lock_path(output_file: Path) -> Path:
+    return output_file.with_suffix(".lock.json")
+
+
+def _is_pid_running(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    if os.name == "nt":
+        return _is_pid_running_windows(pid)
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _is_pid_running_windows(pid: int) -> bool:
+    process_query_limited_information = 0x1000
+    still_active = 259
+    error_invalid_parameter = 87
+    error_access_denied = 5
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.restype = ctypes.c_void_p
+    kernel32.OpenProcess.argtypes = (ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32)
+    kernel32.GetExitCodeProcess.argtypes = (ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32))
+    kernel32.GetExitCodeProcess.restype = ctypes.c_int
+    kernel32.CloseHandle.argtypes = (ctypes.c_void_p,)
+    kernel32.CloseHandle.restype = ctypes.c_int
+
+    handle = kernel32.OpenProcess(process_query_limited_information, 0, pid)
+    if not handle:
+        error_code = ctypes.get_last_error()
+        if error_code == error_invalid_parameter:
+            return False
+        if error_code == error_access_denied:
+            return True
+        return True
+
+    try:
+        exit_code = ctypes.c_uint32()
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code)):
+            return True
+        return exit_code.value == still_active
+    finally:
+        kernel32.CloseHandle(handle)
+
+
+def _acquire_import_lock(output_file: Path) -> tuple[Path, str]:
+    lock_path = _import_lock_path(output_file)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    run_id = uuid.uuid4().hex[:12]
+    lock_payload = {
+        "run_id": run_id,
+        "pid": os.getpid(),
+        "started_at": _utcnow(),
+        "output_path": str(output_file),
+    }
+    while True:
+        try:
+            with lock_path.open("x", encoding="utf-8") as handle:
+                json.dump(lock_payload, handle, indent=2)
+            return lock_path, run_id
+        except FileExistsError:
+            existing = _read_existing_lock(lock_path)
+            existing_pid = existing.get("pid")
+            if isinstance(existing_pid, int) and _is_pid_running(existing_pid):
+                raise RuntimeError(
+                    f"Another RecipeNLG import appears active for {output_file}. "
+                    f"Lock file: {lock_path}"
+                )
+            stale_path = lock_path.with_name(f"{lock_path.stem}.stale-{int(time.time())}{lock_path.suffix}")
+            lock_path.replace(stale_path)
+
+
+def _read_existing_lock(lock_path: Path) -> dict:
+    try:
+        return json.loads(lock_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _release_import_lock(lock_path: Path) -> None:
+    try:
+        lock_path.unlink()
+    except FileNotFoundError:
+        return
+
+
+def _write_json_atomic(path: Path, payload: object) -> None:
+    temp_path = path.with_name(f"{path.name}.{uuid.uuid4().hex}.tmp")
+    temp_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    temp_path.replace(path)
+
+
+def _maybe_report_recipenlg_progress(raw_count: int, accepted_count: int, config: ImportConfig) -> None:
+    if config.progress_every_rows <= 0:
+        return
+    if raw_count % config.progress_every_rows != 0:
+        return
+    print(
+        "RecipeNLG progress:",
+        json.dumps(
+            {
+                "rows_scanned": raw_count,
+                "accepted_count": accepted_count,
+                "rejected_count": raw_count - accepted_count,
+            }
+        ),
+        flush=True,
+    )
+
+
+def _maybe_write_recipenlg_checkpoint(
+    *,
+    checkpoint_file: Path,
+    config: ImportConfig,
+    raw_count: int,
+    accepted_count: int,
+    written_count: int,
+    imported_recipes: tuple[NormalizedRecipe, ...],
+    reason_counts: dict[str, int],
+    source_names: tuple[str, ...],
+    run_id: str,
+    started_at: str,
+    output_file: Path,
+) -> None:
+    if config.checkpoint_every_rows <= 0:
+        return
+    if raw_count % config.checkpoint_every_rows != 0:
+        return
+    checkpoint_stats = _build_streaming_import_stats(
+        raw_count=raw_count,
+        accepted_count=accepted_count,
+        written_count=written_count,
+        imported_recipes=imported_recipes,
+        reason_counts=reason_counts,
+        source_names=source_names,
+    )
+    checkpoint_stats.update(
+        {
+            "status": "running",
+            "stage": "streaming_rows",
+            "run_id": run_id,
+            "started_at": started_at,
+            "updated_at": _utcnow(),
+            "row_limit": config.row_limit,
+            "output_path": str(output_file),
+        }
+    )
+    _write_json_atomic(checkpoint_file, checkpoint_stats)
+
+
+def _write_recipenlg_stage_checkpoint(
+    *,
+    checkpoint_file: Path,
+    raw_count: int,
+    accepted_count: int,
+    written_count: int,
+    imported_recipes: tuple[NormalizedRecipe, ...],
+    reason_counts: dict[str, int],
+    source_names: tuple[str, ...],
+    run_id: str,
+    started_at: str,
+    output_file: Path,
+    row_limit: int | None,
+    stage: str,
+) -> None:
+    checkpoint_stats = _build_streaming_import_stats(
+        raw_count=raw_count,
+        accepted_count=accepted_count,
+        written_count=written_count,
+        imported_recipes=imported_recipes,
+        reason_counts=reason_counts,
+        source_names=source_names,
+    )
+    checkpoint_stats.update(
+        {
+            "status": "running",
+            "stage": stage,
+            "run_id": run_id,
+            "started_at": started_at,
+            "updated_at": _utcnow(),
+            "row_limit": row_limit,
+            "output_path": str(output_file),
+        }
+    )
+    _write_json_atomic(checkpoint_file, checkpoint_stats)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, replace
 
 from pantry_pilot.data_pipeline.schema import DiversityMetadata, NormalizedRecipe, SimilarityMetadata
@@ -61,6 +62,9 @@ class RecipeSimilarityMatch:
     exact_duplicate: bool
 
 
+SimilarityProgressCallback = Callable[[dict[str, int]], None]
+
+
 def build_diversity_metadata(recipe: NormalizedRecipe) -> DiversityMetadata:
     ingredient_names = tuple(sorted({ingredient.canonical_name for ingredient in recipe.ingredients}))
     meal_styles = tuple(sorted(_meal_style_markers(recipe.title)))
@@ -80,21 +84,58 @@ def build_diversity_metadata(recipe: NormalizedRecipe) -> DiversityMetadata:
     )
 
 
-def annotate_recipe_similarity(recipes: tuple[NormalizedRecipe, ...]) -> tuple[NormalizedRecipe, ...]:
+def annotate_recipe_similarity(
+    recipes: tuple[NormalizedRecipe, ...],
+    *,
+    progress_every_recipes: int = 0,
+    progress_callback: SimilarityProgressCallback | None = None,
+) -> tuple[NormalizedRecipe, ...]:
     ordered = tuple(sorted(recipes, key=lambda recipe: recipe.recipe_id))
     if not ordered:
         return ()
 
     adjacency: dict[str, set[str]] = {recipe.recipe_id: set() for recipe in ordered}
     pair_matches: dict[tuple[str, str], RecipeSimilarityMatch] = {}
+    indexed_title_tokens: dict[str, set[str]] = {}
+    indexed_ingredients: dict[str, set[str]] = {}
+    recipes_by_id = {recipe.recipe_id: recipe for recipe in ordered}
+    comparisons_evaluated = 0
     for index, left in enumerate(ordered):
-        for right in ordered[index + 1 :]:
+        left_title_tokens = _title_tokens(left.title)
+        left_ingredients = {ingredient.canonical_name for ingredient in left.ingredients}
+        candidate_ids = _candidate_recipe_ids(
+            title_tokens=left_title_tokens,
+            ingredients=left_ingredients,
+            indexed_title_tokens=indexed_title_tokens,
+            indexed_ingredients=indexed_ingredients,
+        )
+        for candidate_id in sorted(candidate_ids):
+            right = recipes_by_id[candidate_id]
             match = compare_recipes(left, right)
+            comparisons_evaluated += 1
             if match.score >= 0.72 or match.exact_duplicate:
                 adjacency[left.recipe_id].add(right.recipe_id)
                 adjacency[right.recipe_id].add(left.recipe_id)
                 pair_matches[(left.recipe_id, right.recipe_id)] = match
                 pair_matches[(right.recipe_id, left.recipe_id)] = match
+        _add_recipe_to_index(indexed_title_tokens, left_title_tokens, left.recipe_id)
+        _add_recipe_to_index(indexed_ingredients, left_ingredients, left.recipe_id)
+        if progress_callback is not None and progress_every_recipes > 0 and (index + 1) % progress_every_recipes == 0:
+            progress_callback(
+                {
+                    "recipes_processed": index + 1,
+                    "recipes_total": len(ordered),
+                    "comparisons_evaluated": comparisons_evaluated,
+                }
+            )
+    if progress_callback is not None and progress_every_recipes > 0 and len(ordered) % progress_every_recipes != 0:
+        progress_callback(
+            {
+                "recipes_processed": len(ordered),
+                "recipes_total": len(ordered),
+                "comparisons_evaluated": comparisons_evaluated,
+            }
+        )
 
     clusters = _build_clusters(ordered, adjacency)
     by_id = {recipe.recipe_id: recipe for recipe in ordered}
@@ -106,7 +147,6 @@ def annotate_recipe_similarity(recipes: tuple[NormalizedRecipe, ...]) -> tuple[N
         if not related_ids:
             similarity = SimilarityMetadata()
         else:
-            representative = by_id[representative_id]
             if recipe.recipe_id == representative_id:
                 best_score, best_signals = _best_related_match(recipe.recipe_id, related_ids, pair_matches)
                 similarity = SimilarityMetadata(
@@ -117,7 +157,18 @@ def annotate_recipe_similarity(recipes: tuple[NormalizedRecipe, ...]) -> tuple[N
                     similarity_signals=best_signals,
                 )
             else:
-                match = pair_matches[(recipe.recipe_id, representative_id)]
+                match = pair_matches.get((recipe.recipe_id, representative_id))
+                if match is None:
+                    best_score, best_signals = _best_related_match(recipe.recipe_id, related_ids, pair_matches)
+                    similarity = SimilarityMetadata(
+                        cluster_id=f"cluster-{representative_id}",
+                        representative_recipe_id=representative_id,
+                        related_recipe_ids=tuple(recipe_id for recipe_id in related_ids if recipe_id != representative_id),
+                        similarity_score_to_representative=best_score,
+                        similarity_signals=best_signals,
+                    )
+                    annotated.append(replace(recipe, similarity=similarity))
+                    continue
                 similarity = SimilarityMetadata(
                     cluster_id=f"cluster-{representative_id}",
                     exact_duplicate_of=representative_id if match.exact_duplicate else "",
@@ -216,13 +267,41 @@ def _best_related_match(
     related_ids: tuple[str, ...],
     pair_matches: dict[tuple[str, str], RecipeSimilarityMatch],
 ) -> tuple[float, tuple[str, ...]]:
-    if not related_ids:
+    candidates = [
+        pair_matches[(recipe_id, other_id)]
+        for other_id in related_ids
+        if (recipe_id, other_id) in pair_matches
+    ]
+    if not candidates:
         return 0.0, ()
-    best = max(
-        (pair_matches[(recipe_id, other_id)] for other_id in related_ids),
-        key=lambda match: (match.score, match.signals),
-    )
+    best = max(candidates, key=lambda match: (match.score, match.signals))
     return best.score, best.signals
+
+
+def _candidate_recipe_ids(
+    *,
+    title_tokens: set[str],
+    ingredients: set[str],
+    indexed_title_tokens: dict[str, set[str]],
+    indexed_ingredients: dict[str, set[str]],
+) -> set[str]:
+    title_candidates: set[str] = set()
+    for title_token in title_tokens:
+        title_candidates.update(indexed_title_tokens.get(title_token, ()))
+    if not title_candidates:
+        return set()
+    ingredient_candidates: set[str] = set()
+    for ingredient in ingredients:
+        ingredient_candidates.update(indexed_ingredients.get(ingredient, ()))
+    if not ingredient_candidates:
+        return set()
+    # The current threshold cannot be reached without both some title overlap and some ingredient overlap.
+    return title_candidates & ingredient_candidates
+
+
+def _add_recipe_to_index(index: dict[str, set[str]], keys: set[str], recipe_id: str) -> None:
+    for key in keys:
+        index.setdefault(key, set()).add(recipe_id)
 
 
 def _title_tokens(title: str) -> set[str]:

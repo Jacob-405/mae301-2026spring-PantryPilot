@@ -1,0 +1,3003 @@
+{
+  "source": "usda-fdc",
+  "top_unmapped_by_frequency": [
+    {
+      "canonical_ingredient": "bacon",
+      "frequency": 903,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon and beef sticks",
+          "food_id": 174602,
+          "normalized_description": "bacon and beef sticks",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.0,
+            "undetermined": 28.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon bits, meatless",
+          "food_id": 169893,
+          "normalized_description": "bacon bits, meatless",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 7.0,
+            "undetermined": 7.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon, meatless",
+          "food_id": 172439,
+          "normalized_description": "bacon, meatless",
+          "portion_grams": {
+            "cup": 144.0,
+            "lb": 453.592,
+            "oz": 16.0,
+            "undetermined": 5.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon, pre-sliced, reduced/low sodium, unprepared",
+          "food_id": 168382,
+          "normalized_description": "bacon, pre sliced, reduced low sodium, unprepared",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 26.0,
+            "undetermined": 26.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon, turkey, low sodium",
+          "food_id": 171640,
+          "normalized_description": "bacon, turkey, low sodium",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 15.0
+          },
+          "score": 176.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "chicken breast",
+      "frequency": 888,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast tenders, breaded, cooked, microwaved",
+          "food_id": 171514,
+          "normalized_description": "chicken breast tenders, breaded, cooked, microwaved",
+          "portion_grams": {
+            "item": 15.0,
+            "lb": 453.592,
+            "oz": 28.333333333333332,
+            "undetermined": 15.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast tenders, breaded, uncooked",
+          "food_id": 171515,
+          "normalized_description": "chicken breast tenders, breaded, uncooked",
+          "portion_grams": {
+            "item": 15.0,
+            "lb": 453.592,
+            "oz": 28.333333333333332,
+            "undetermined": 15.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast, deli, rotisserie seasoned, sliced, prepackaged",
+          "food_id": 173874,
+          "normalized_description": "chicken breast, deli, rotisserie seasoned, sliced, prepackaged",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 12.0,
+            "undetermined": 12.0
+          },
+          "score": 222.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast, fat-free, mesquite flavor, sliced",
+          "food_id": 172962,
+          "normalized_description": "chicken breast, fat free, mesquite flavor, sliced",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 42.0,
+            "undetermined": 42.0
+          },
+          "score": 222.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast, oven-roasted, fat-free, sliced",
+          "food_id": 172963,
+          "normalized_description": "chicken breast, oven roasted, fat free, sliced",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 42.0,
+            "undetermined": 42.0
+          },
+          "score": 222.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "raisins",
+      "frequency": 863,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Cookies, oatmeal, soft, with raisins",
+          "food_id": 333008,
+          "normalized_description": "cookies, oatmeal, soft, with raisins",
+          "portion_grams": {
+            "cookie": 27.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 30.0
+          },
+          "score": 201.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Raisins",
+          "food_id": 2709212,
+          "normalized_description": "raisins",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 0.5
+          },
+          "score": 191.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Raisins, golden, seedless",
+          "food_id": 168164,
+          "normalized_description": "raisins, golden, seedless",
+          "portion_grams": {
+            "cup": 145.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 145.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Raisins, seeded",
+          "food_id": 168166,
+          "normalized_description": "raisins, seeded",
+          "portion_grams": {
+            "cup": 145.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 145.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Breakfast bars, oats, sugar, raisins, coconut (include granola bar)",
+          "food_id": 169063,
+          "normalized_description": "breakfast bars, oats, sugar, raisins, coconut include granola bar",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 43.0
+          },
+          "score": 151.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "soy sauce",
+      "frequency": 713,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Soy sauce",
+          "food_id": 2707442,
+          "normalized_description": "soy sauce",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 2.0
+          },
+          "score": 257.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soy sauce made from hydrolyzed vegetable protein",
+          "food_id": 174279,
+          "normalized_description": "soy sauce made from hydrolyzed vegetable protein",
+          "portion_grams": {
+            "cup": 232.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 18.0,
+            "tsp": 6.0,
+            "undetermined": 6.0
+          },
+          "score": 242.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soy sauce made from soy (tamari)",
+          "food_id": 174278,
+          "normalized_description": "soy sauce made from soy tamari",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 18.0,
+            "tsp": 6.0,
+            "undetermined": 6.0
+          },
+          "score": 242.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soy sauce made from soy and wheat (shoyu)",
+          "food_id": 174277,
+          "normalized_description": "soy sauce made from soy and wheat shoyu",
+          "portion_grams": {
+            "cup": 255.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 16.0,
+            "tsp": 5.3,
+            "undetermined": 5.3
+          },
+          "score": 242.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soy sauce made from soy and wheat (shoyu), low sodium",
+          "food_id": 172473,
+          "normalized_description": "soy sauce made from soy and wheat shoyu , low sodium",
+          "portion_grams": {
+            "cup": 255.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 14.2,
+            "tsp": 4.5,
+            "undetermined": 4.5
+          },
+          "score": 242.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "chicken broth",
+      "frequency": 481,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth cubes, dry",
+          "food_id": 171563,
+          "normalized_description": "soup, chicken broth cubes, dry",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 4.8
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth cubes, dry, prepared with water",
+          "food_id": 174566,
+          "normalized_description": "soup, chicken broth cubes, dry, prepared with water",
+          "portion_grams": {
+            "cup": 243.0,
+            "lb": 453.592,
+            "oz": 182.0,
+            "undetermined": 182.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth or bouillon, dry",
+          "food_id": 171562,
+          "normalized_description": "soup, chicken broth or bouillon, dry",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tsp": 2.0,
+            "undetermined": 2.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth or bouillon, dry, prepared with water",
+          "food_id": 172924,
+          "normalized_description": "soup, chicken broth or bouillon, dry, prepared with water",
+          "portion_grams": {
+            "cup": 241.0,
+            "lb": 453.592,
+            "oz": 30.1,
+            "undetermined": 30.1
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth, canned, condensed",
+          "food_id": 171542,
+          "normalized_description": "soup, chicken broth, canned, condensed",
+          "portion_grams": {
+            "cup": 252.0,
+            "lb": 453.592,
+            "oz": 252.0,
+            "undetermined": 252.0
+          },
+          "score": 157.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "bell pepper",
+      "frequency": 457,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Peppers, bell, green, raw",
+          "food_id": 2258588,
+          "normalized_description": "peppers, bell, green, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 145.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Peppers, bell, orange, raw",
+          "food_id": 2258591,
+          "normalized_description": "peppers, bell, orange, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 145.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Peppers, bell, red, raw",
+          "food_id": 2258590,
+          "normalized_description": "peppers, bell, red, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 145.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Peppers, bell, yellow, raw",
+          "food_id": 2258589,
+          "normalized_description": "peppers, bell, yellow, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 145.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Peppers, sweet, green, raw",
+          "food_id": 170427,
+          "normalized_description": "peppers, sweet, green, raw",
+          "portion_grams": {
+            "cup": 92.0,
+            "lb": 164.0,
+            "oz": 28.3495,
+            "slice": 92.0,
+            "tbsp": 9.3,
+            "undetermined": 2.7
+          },
+          "score": 94.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "rice vinegar",
+      "frequency": 369,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Long rice noodles, made from mung beans, cooked",
+          "food_id": 2708355,
+          "normalized_description": "long rice noodles, made from mung beans, cooked",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 190.0
+          },
+          "score": 60.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Rice noodles, cooked",
+          "food_id": 2708356,
+          "normalized_description": "rice noodles, cooked",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 100.0
+          },
+          "score": 60.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Rice, brown and wild, cooked, NS as to fat",
+          "food_id": 2708431,
+          "normalized_description": "rice, brown and wild, cooked, ns as to fat",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 113.0
+          },
+          "score": 60.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Rice, brown and wild, cooked, fat added",
+          "food_id": 2708430,
+          "normalized_description": "rice, brown and wild, cooked, fat added",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 116.0
+          },
+          "score": 60.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Rice, brown and wild, cooked, no added fat",
+          "food_id": 2708427,
+          "normalized_description": "rice, brown and wild, cooked, no added fat",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 113.0
+          },
+          "score": 60.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "coconut",
+      "frequency": 324,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Flour, coconut",
+          "food_id": 2515382,
+          "normalized_description": "flour, coconut",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 15.0
+          },
+          "score": 201.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Oil, coconut",
+          "food_id": 330458,
+          "normalized_description": "oil, coconut",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 11.6
+          },
+          "score": 201.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Coconut cream, canned, sweetened",
+          "food_id": 2707571,
+          "normalized_description": "coconut cream, canned, sweetened",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 23.0
+          },
+          "score": 166.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Coconut milk",
+          "food_id": 2705413,
+          "normalized_description": "coconut milk",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 2.5
+          },
+          "score": 166.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Coconut milk, used in cooking",
+          "food_id": 2707568,
+          "normalized_description": "coconut milk, used in cooking",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 30.0
+          },
+          "score": 166.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "banana",
+      "frequency": 237,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Bananas, overripe, raw",
+          "food_id": 1105073,
+          "normalized_description": "bananas, overripe, raw",
+          "portion_grams": {
+            "banana": 110.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 194.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Bananas, ripe and slightly ripe, raw",
+          "food_id": 1105314,
+          "normalized_description": "bananas, ripe and slightly ripe, raw",
+          "portion_grams": {
+            "banana": 115.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 194.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bananas, raw",
+          "food_id": 173944,
+          "normalized_description": "bananas, raw",
+          "portion_grams": {
+            "cup": 150.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 150.0,
+            "undetermined": 81.0
+          },
+          "score": 184.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bananas, dehydrated, or banana powder",
+          "food_id": 173945,
+          "normalized_description": "bananas, dehydrated, or banana powder",
+          "portion_grams": {
+            "cup": 100.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 6.2,
+            "undetermined": 6.2
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Banana, raw",
+          "food_id": 2709224,
+          "normalized_description": "banana, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 6.0
+          },
+          "score": 174.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "lime",
+      "frequency": 141,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Lime juice, raw",
+          "food_id": 168156,
+          "normalized_description": "lime juice, raw",
+          "portion_grams": {
+            "cup": 242.0,
+            "lb": 453.592,
+            "oz": 30.8,
+            "undetermined": 30.8
+          },
+          "score": 184.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Limes, raw",
+          "food_id": 168155,
+          "normalized_description": "limes, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 67.0
+          },
+          "score": 183.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Lime juice, canned or bottled, unsweetened",
+          "food_id": 168157,
+          "normalized_description": "lime juice, canned or bottled, unsweetened",
+          "portion_grams": {
+            "cup": 246.0,
+            "lb": 453.592,
+            "oz": 30.8,
+            "undetermined": 30.8
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Lime, raw",
+          "food_id": 2709170,
+          "normalized_description": "lime, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 8.0
+          },
+          "score": 174.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Lime juice, 100%, NS as to form",
+          "food_id": 2709183,
+          "normalized_description": "lime juice, 100 , ns as to form",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 0.1
+          },
+          "score": 166.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "mushroom",
+      "frequency": 141,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Mushrooms, raw",
+          "food_id": 2709793,
+          "normalized_description": "mushrooms, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 6.0
+          },
+          "score": 234.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Mushroom, beech",
+          "food_id": 2003603,
+          "normalized_description": "mushroom, beech",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Mushroom, crimini",
+          "food_id": 2003601,
+          "normalized_description": "mushroom, crimini",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Mushroom, enoki",
+          "food_id": 2003600,
+          "normalized_description": "mushroom, enoki",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Mushroom, king oyster",
+          "food_id": 2003599,
+          "normalized_description": "mushroom, king oyster",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "tomato sauce",
+      "frequency": 138,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Tomato sauce, canned, no salt added",
+          "food_id": 169074,
+          "normalized_description": "tomato sauce, canned, no salt added",
+          "portion_grams": {
+            "cup": 245.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 245.0
+          },
+          "score": 182.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Tomato sauce, for use with vegetables",
+          "food_id": 2710247,
+          "normalized_description": "tomato sauce, for use with vegetables",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 30.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Babyfood, dinner, macaroni, beef and tomato sauce, toddler",
+          "food_id": 168125,
+          "normalized_description": "babyfood, dinner, macaroni, beef and tomato sauce, toddler",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 16.0,
+            "undetermined": 16.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Babyfood, ravioli, cheese filled, with tomato sauce",
+          "food_id": 172257,
+          "normalized_description": "babyfood, ravioli, cheese filled, with tomato sauce",
+          "portion_grams": {
+            "item": 8.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 16.0,
+            "undetermined": 8.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Beans, baked, canned, with pork and tomato sauce",
+          "food_id": 173733,
+          "normalized_description": "beans, baked, canned, with pork and tomato sauce",
+          "portion_grams": {
+            "cup": 246.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 246.0
+          },
+          "score": 157.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "black beans",
+      "frequency": 99,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Black beans and brown rice",
+          "food_id": 2709035,
+          "normalized_description": "black beans and brown rice",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 170.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Black beans and white rice",
+          "food_id": 2708994,
+          "normalized_description": "black beans and white rice",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 170.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Black beans with meat",
+          "food_id": 2707366,
+          "normalized_description": "black beans with meat",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 130.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Black beans, NFS",
+          "food_id": 2707359,
+          "normalized_description": "black beans, nfs",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 92.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Black beans, from canned, fat added",
+          "food_id": 2707362,
+          "normalized_description": "black beans, from canned, fat added",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 92.0
+          },
+          "score": 172.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "cherries",
+      "frequency": 59,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Cherries, sweet, raw",
+          "food_id": 171719,
+          "normalized_description": "cherries, sweet, raw",
+          "portion_grams": {
+            "cup": 138.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 8.2
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Cherries, sweet, dark red, raw",
+          "food_id": 2346399,
+          "normalized_description": "cherries, sweet, dark red, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 234.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Cherries, sour, red, raw",
+          "food_id": 173954,
+          "normalized_description": "cherries, sour, red, raw",
+          "portion_grams": {
+            "cup": 103.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 103.0
+          },
+          "score": 184.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Cherries, sour, canned, water pack, drained",
+          "food_id": 167769,
+          "normalized_description": "cherries, sour, canned, water pack, drained",
+          "portion_grams": {
+            "cup": 168.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 168.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Cherries, sour, red, canned, extra heavy syrup pack, solids and liquids",
+          "food_id": 171717,
+          "normalized_description": "cherries, sour, red, canned, extra heavy syrup pack, solids and liquids",
+          "portion_grams": {
+            "cup": 261.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 261.0
+          },
+          "score": 176.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "spinach",
+      "frequency": 42,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Spinach, raw",
+          "food_id": 168462,
+          "normalized_description": "spinach, raw",
+          "portion_grams": {
+            "cup": 30.0,
+            "lb": 453.592,
+            "oz": 284.0,
+            "undetermined": 10.0
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Spinach, raw",
+          "food_id": 2709614,
+          "normalized_description": "spinach, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 0.6
+          },
+          "score": 234.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Spinach, baby",
+          "food_id": 1999632,
+          "normalized_description": "spinach, baby",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Spinach, mature",
+          "food_id": 1999633,
+          "normalized_description": "spinach, mature",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "New Zealand spinach, raw",
+          "food_id": 168440,
+          "normalized_description": "new zealand spinach, raw",
+          "portion_grams": {
+            "cup": 56.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 56.0
+          },
+          "score": 219.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "lentils",
+      "frequency": 21,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Lentils, mature seeds, cooked, boiled, with salt",
+          "food_id": 175254,
+          "normalized_description": "lentils, mature seeds, cooked, boiled, with salt",
+          "portion_grams": {
+            "cup": 198.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 198.0
+          },
+          "score": 240.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Lentils, mature seeds, cooked, boiled, without salt",
+          "food_id": 172421,
+          "normalized_description": "lentils, mature seeds, cooked, boiled, without salt",
+          "portion_grams": {
+            "cup": 198.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 12.3,
+            "undetermined": 12.3
+          },
+          "score": 240.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Lentils, dry",
+          "food_id": 2644283,
+          "normalized_description": "lentils, dry",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 35.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Lentils, pink or red, raw",
+          "food_id": 174284,
+          "normalized_description": "lentils, pink or red, raw",
+          "portion_grams": {
+            "cup": 192.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 192.0
+          },
+          "score": 184.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Lentils, raw",
+          "food_id": 172420,
+          "normalized_description": "lentils, raw",
+          "portion_grams": {
+            "cup": 192.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 12.0,
+            "undetermined": 12.0
+          },
+          "score": 184.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "garam masala",
+      "frequency": 17,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Apples, fuji, with skin, raw",
+          "food_id": 1750340,
+          "normalized_description": "apples, fuji, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Apples, gala, with skin, raw",
+          "food_id": 1750341,
+          "normalized_description": "apples, gala, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Apples, granny smith, with skin, raw",
+          "food_id": 1750342,
+          "normalized_description": "apples, granny smith, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Apples, honeycrisp, with skin, raw",
+          "food_id": 1750343,
+          "normalized_description": "apples, honeycrisp, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Apples, red delicious, with skin, raw",
+          "food_id": 1750339,
+          "normalized_description": "apples, red delicious, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "vegetable broth",
+      "frequency": 17,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, SWANSON, vegetable broth",
+          "food_id": 171180,
+          "normalized_description": "soup, swanson, vegetable broth",
+          "portion_grams": {
+            "cup": 220.0,
+            "lb": 453.592,
+            "oz": 928.0,
+            "undetermined": 220.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, vegetable broth, ready to serve",
+          "food_id": 171583,
+          "normalized_description": "soup, vegetable broth, ready to serve",
+          "portion_grams": {
+            "cup": 221.0,
+            "lb": 453.592,
+            "oz": 926.0,
+            "undetermined": 221.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, vegetable with beef broth, canned, condensed",
+          "food_id": 171164,
+          "normalized_description": "soup, vegetable with beef broth, canned, condensed",
+          "portion_grams": {
+            "cup": 246.0,
+            "lb": 453.592,
+            "oz": 298.0,
+            "undetermined": 246.0
+          },
+          "score": 87.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, vegetable with beef broth, canned, prepared with equal volume water",
+          "food_id": 172921,
+          "normalized_description": "soup, vegetable with beef broth, canned, prepared with equal volume water",
+          "portion_grams": {
+            "cup": 241.0,
+            "lb": 453.592,
+            "oz": 241.0,
+            "undetermined": 241.0
+          },
+          "score": 87.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Raw vegetable, NFS",
+          "food_id": 2709763,
+          "normalized_description": "raw vegetable, nfs",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 60.0
+          },
+          "score": 64.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "figs",
+      "frequency": 15,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Figs, raw",
+          "food_id": 173021,
+          "normalized_description": "figs, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 40.0
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Figs, dried, uncooked",
+          "food_id": 746768,
+          "normalized_description": "figs, dried, uncooked",
+          "portion_grams": {
+            "cup": 149.0,
+            "each": 8.4,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 230.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Figs, dried, uncooked",
+          "food_id": 174665,
+          "normalized_description": "figs, dried, uncooked",
+          "portion_grams": {
+            "cup": 149.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 8.4
+          },
+          "score": 180.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Figs, canned, extra heavy syrup pack, solids and liquids",
+          "food_id": 173025,
+          "normalized_description": "figs, canned, extra heavy syrup pack, solids and liquids",
+          "portion_grams": {
+            "cup": 261.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 261.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Figs, canned, heavy syrup pack, solids and liquids",
+          "food_id": 173024,
+          "normalized_description": "figs, canned, heavy syrup pack, solids and liquids",
+          "portion_grams": {
+            "cup": 259.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 28.0
+          },
+          "score": 176.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "frozen berries",
+      "frequency": 6,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Berries, NFS",
+          "food_id": 2709271,
+          "normalized_description": "berries, nfs",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 75.0
+          },
+          "score": 111.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Berries, frozen",
+          "food_id": 2709272,
+          "normalized_description": "berries, frozen",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 75.0
+          },
+          "score": 111.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Babyfood, banana with mixed berries, strained",
+          "food_id": 170999,
+          "normalized_description": "babyfood, banana with mixed berries, strained",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 99.0
+          },
+          "score": 81.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Cereals ready-to-eat, QUAKER, Cap'n Crunch's OOPS! All Berries Cereal",
+          "food_id": 173013,
+          "normalized_description": "cereals ready to eat, quaker, cap n crunch s oops all berries cereal",
+          "portion_grams": {
+            "cup": 32.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 32.0
+          },
+          "score": 81.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Goji berries, dried",
+          "food_id": 173032,
+          "normalized_description": "goji berries, dried",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 5.6,
+            "undetermined": 5.6
+          },
+          "score": 81.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "tofu",
+      "frequency": 4,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu, raw, firm, prepared with calcium sulfate",
+          "food_id": 172475,
+          "normalized_description": "tofu, raw, firm, prepared with calcium sulfate",
+          "portion_grams": {
+            "cup": 252.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 252.0
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu, raw, regular, prepared with calcium sulfate",
+          "food_id": 172476,
+          "normalized_description": "tofu, raw, regular, prepared with calcium sulfate",
+          "portion_grams": {
+            "cup": 248.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 248.0
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu yogurt",
+          "food_id": 167722,
+          "normalized_description": "tofu yogurt",
+          "portion_grams": {
+            "cup": 262.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 262.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu, dried-frozen (koyadofu)",
+          "food_id": 172450,
+          "normalized_description": "tofu, dried frozen koyadofu",
+          "portion_grams": {
+            "item": 17.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 17.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu, dried-frozen (koyadofu), prepared with calcium sulfate",
+          "food_id": 174303,
+          "normalized_description": "tofu, dried frozen koyadofu , prepared with calcium sulfate",
+          "portion_grams": {
+            "item": 17.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 17.0
+          },
+          "score": 176.0
+        }
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "canonical_ingredient": "bacon",
+      "frequency": 903,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon and beef sticks",
+          "food_id": 174602,
+          "normalized_description": "bacon and beef sticks",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.0,
+            "undetermined": 28.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon bits, meatless",
+          "food_id": 169893,
+          "normalized_description": "bacon bits, meatless",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 7.0,
+            "undetermined": 7.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon, meatless",
+          "food_id": 172439,
+          "normalized_description": "bacon, meatless",
+          "portion_grams": {
+            "cup": 144.0,
+            "lb": 453.592,
+            "oz": 16.0,
+            "undetermined": 5.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon, pre-sliced, reduced/low sodium, unprepared",
+          "food_id": 168382,
+          "normalized_description": "bacon, pre sliced, reduced low sodium, unprepared",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 26.0,
+            "undetermined": 26.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bacon, turkey, low sodium",
+          "food_id": 171640,
+          "normalized_description": "bacon, turkey, low sodium",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 15.0
+          },
+          "score": 176.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "chicken breast",
+      "frequency": 888,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast tenders, breaded, cooked, microwaved",
+          "food_id": 171514,
+          "normalized_description": "chicken breast tenders, breaded, cooked, microwaved",
+          "portion_grams": {
+            "item": 15.0,
+            "lb": 453.592,
+            "oz": 28.333333333333332,
+            "undetermined": 15.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast tenders, breaded, uncooked",
+          "food_id": 171515,
+          "normalized_description": "chicken breast tenders, breaded, uncooked",
+          "portion_grams": {
+            "item": 15.0,
+            "lb": 453.592,
+            "oz": 28.333333333333332,
+            "undetermined": 15.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast, deli, rotisserie seasoned, sliced, prepackaged",
+          "food_id": 173874,
+          "normalized_description": "chicken breast, deli, rotisserie seasoned, sliced, prepackaged",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 12.0,
+            "undetermined": 12.0
+          },
+          "score": 222.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast, fat-free, mesquite flavor, sliced",
+          "food_id": 172962,
+          "normalized_description": "chicken breast, fat free, mesquite flavor, sliced",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 42.0,
+            "undetermined": 42.0
+          },
+          "score": 222.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Chicken breast, oven-roasted, fat-free, sliced",
+          "food_id": 172963,
+          "normalized_description": "chicken breast, oven roasted, fat free, sliced",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 42.0,
+            "undetermined": 42.0
+          },
+          "score": 222.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "raisins",
+      "frequency": 863,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Cookies, oatmeal, soft, with raisins",
+          "food_id": 333008,
+          "normalized_description": "cookies, oatmeal, soft, with raisins",
+          "portion_grams": {
+            "cookie": 27.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 30.0
+          },
+          "score": 201.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Raisins",
+          "food_id": 2709212,
+          "normalized_description": "raisins",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 0.5
+          },
+          "score": 191.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Raisins, golden, seedless",
+          "food_id": 168164,
+          "normalized_description": "raisins, golden, seedless",
+          "portion_grams": {
+            "cup": 145.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 145.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Raisins, seeded",
+          "food_id": 168166,
+          "normalized_description": "raisins, seeded",
+          "portion_grams": {
+            "cup": 145.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 145.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Breakfast bars, oats, sugar, raisins, coconut (include granola bar)",
+          "food_id": 169063,
+          "normalized_description": "breakfast bars, oats, sugar, raisins, coconut include granola bar",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 43.0
+          },
+          "score": 151.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "soy sauce",
+      "frequency": 713,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Soy sauce",
+          "food_id": 2707442,
+          "normalized_description": "soy sauce",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 2.0
+          },
+          "score": 257.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soy sauce made from hydrolyzed vegetable protein",
+          "food_id": 174279,
+          "normalized_description": "soy sauce made from hydrolyzed vegetable protein",
+          "portion_grams": {
+            "cup": 232.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 18.0,
+            "tsp": 6.0,
+            "undetermined": 6.0
+          },
+          "score": 242.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soy sauce made from soy (tamari)",
+          "food_id": 174278,
+          "normalized_description": "soy sauce made from soy tamari",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 18.0,
+            "tsp": 6.0,
+            "undetermined": 6.0
+          },
+          "score": 242.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soy sauce made from soy and wheat (shoyu)",
+          "food_id": 174277,
+          "normalized_description": "soy sauce made from soy and wheat shoyu",
+          "portion_grams": {
+            "cup": 255.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 16.0,
+            "tsp": 5.3,
+            "undetermined": 5.3
+          },
+          "score": 242.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soy sauce made from soy and wheat (shoyu), low sodium",
+          "food_id": 172473,
+          "normalized_description": "soy sauce made from soy and wheat shoyu , low sodium",
+          "portion_grams": {
+            "cup": 255.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 14.2,
+            "tsp": 4.5,
+            "undetermined": 4.5
+          },
+          "score": 242.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "chicken broth",
+      "frequency": 481,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth cubes, dry",
+          "food_id": 171563,
+          "normalized_description": "soup, chicken broth cubes, dry",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 4.8
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth cubes, dry, prepared with water",
+          "food_id": 174566,
+          "normalized_description": "soup, chicken broth cubes, dry, prepared with water",
+          "portion_grams": {
+            "cup": 243.0,
+            "lb": 453.592,
+            "oz": 182.0,
+            "undetermined": 182.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth or bouillon, dry",
+          "food_id": 171562,
+          "normalized_description": "soup, chicken broth or bouillon, dry",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tsp": 2.0,
+            "undetermined": 2.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth or bouillon, dry, prepared with water",
+          "food_id": 172924,
+          "normalized_description": "soup, chicken broth or bouillon, dry, prepared with water",
+          "portion_grams": {
+            "cup": 241.0,
+            "lb": 453.592,
+            "oz": 30.1,
+            "undetermined": 30.1
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, chicken broth, canned, condensed",
+          "food_id": 171542,
+          "normalized_description": "soup, chicken broth, canned, condensed",
+          "portion_grams": {
+            "cup": 252.0,
+            "lb": 453.592,
+            "oz": 252.0,
+            "undetermined": 252.0
+          },
+          "score": 157.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "bell pepper",
+      "frequency": 457,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Peppers, bell, green, raw",
+          "food_id": 2258588,
+          "normalized_description": "peppers, bell, green, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 145.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Peppers, bell, orange, raw",
+          "food_id": 2258591,
+          "normalized_description": "peppers, bell, orange, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 145.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Peppers, bell, red, raw",
+          "food_id": 2258590,
+          "normalized_description": "peppers, bell, red, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 145.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Peppers, bell, yellow, raw",
+          "food_id": 2258589,
+          "normalized_description": "peppers, bell, yellow, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 145.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Peppers, sweet, green, raw",
+          "food_id": 170427,
+          "normalized_description": "peppers, sweet, green, raw",
+          "portion_grams": {
+            "cup": 92.0,
+            "lb": 164.0,
+            "oz": 28.3495,
+            "slice": 92.0,
+            "tbsp": 9.3,
+            "undetermined": 2.7
+          },
+          "score": 94.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "rice vinegar",
+      "frequency": 369,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Long rice noodles, made from mung beans, cooked",
+          "food_id": 2708355,
+          "normalized_description": "long rice noodles, made from mung beans, cooked",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 190.0
+          },
+          "score": 60.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Rice noodles, cooked",
+          "food_id": 2708356,
+          "normalized_description": "rice noodles, cooked",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 100.0
+          },
+          "score": 60.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Rice, brown and wild, cooked, NS as to fat",
+          "food_id": 2708431,
+          "normalized_description": "rice, brown and wild, cooked, ns as to fat",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 113.0
+          },
+          "score": 60.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Rice, brown and wild, cooked, fat added",
+          "food_id": 2708430,
+          "normalized_description": "rice, brown and wild, cooked, fat added",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 116.0
+          },
+          "score": 60.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Rice, brown and wild, cooked, no added fat",
+          "food_id": 2708427,
+          "normalized_description": "rice, brown and wild, cooked, no added fat",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 113.0
+          },
+          "score": 60.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "coconut",
+      "frequency": 324,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Flour, coconut",
+          "food_id": 2515382,
+          "normalized_description": "flour, coconut",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 15.0
+          },
+          "score": 201.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Oil, coconut",
+          "food_id": 330458,
+          "normalized_description": "oil, coconut",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 11.6
+          },
+          "score": 201.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Coconut cream, canned, sweetened",
+          "food_id": 2707571,
+          "normalized_description": "coconut cream, canned, sweetened",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 23.0
+          },
+          "score": 166.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Coconut milk",
+          "food_id": 2705413,
+          "normalized_description": "coconut milk",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 2.5
+          },
+          "score": 166.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Coconut milk, used in cooking",
+          "food_id": 2707568,
+          "normalized_description": "coconut milk, used in cooking",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 30.0
+          },
+          "score": 166.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "banana",
+      "frequency": 237,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Bananas, overripe, raw",
+          "food_id": 1105073,
+          "normalized_description": "bananas, overripe, raw",
+          "portion_grams": {
+            "banana": 110.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 194.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Bananas, ripe and slightly ripe, raw",
+          "food_id": 1105314,
+          "normalized_description": "bananas, ripe and slightly ripe, raw",
+          "portion_grams": {
+            "banana": 115.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 194.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bananas, raw",
+          "food_id": 173944,
+          "normalized_description": "bananas, raw",
+          "portion_grams": {
+            "cup": 150.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "slice": 150.0,
+            "undetermined": 81.0
+          },
+          "score": 184.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Bananas, dehydrated, or banana powder",
+          "food_id": 173945,
+          "normalized_description": "bananas, dehydrated, or banana powder",
+          "portion_grams": {
+            "cup": 100.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 6.2,
+            "undetermined": 6.2
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Banana, raw",
+          "food_id": 2709224,
+          "normalized_description": "banana, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 6.0
+          },
+          "score": 174.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "lime",
+      "frequency": 141,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Lime juice, raw",
+          "food_id": 168156,
+          "normalized_description": "lime juice, raw",
+          "portion_grams": {
+            "cup": 242.0,
+            "lb": 453.592,
+            "oz": 30.8,
+            "undetermined": 30.8
+          },
+          "score": 184.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Limes, raw",
+          "food_id": 168155,
+          "normalized_description": "limes, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 67.0
+          },
+          "score": 183.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Lime juice, canned or bottled, unsweetened",
+          "food_id": 168157,
+          "normalized_description": "lime juice, canned or bottled, unsweetened",
+          "portion_grams": {
+            "cup": 246.0,
+            "lb": 453.592,
+            "oz": 30.8,
+            "undetermined": 30.8
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Lime, raw",
+          "food_id": 2709170,
+          "normalized_description": "lime, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 8.0
+          },
+          "score": 174.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Lime juice, 100%, NS as to form",
+          "food_id": 2709183,
+          "normalized_description": "lime juice, 100 , ns as to form",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 0.1
+          },
+          "score": 166.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "mushroom",
+      "frequency": 141,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Mushrooms, raw",
+          "food_id": 2709793,
+          "normalized_description": "mushrooms, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 6.0
+          },
+          "score": 234.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Mushroom, beech",
+          "food_id": 2003603,
+          "normalized_description": "mushroom, beech",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Mushroom, crimini",
+          "food_id": 2003601,
+          "normalized_description": "mushroom, crimini",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Mushroom, enoki",
+          "food_id": 2003600,
+          "normalized_description": "mushroom, enoki",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Mushroom, king oyster",
+          "food_id": 2003599,
+          "normalized_description": "mushroom, king oyster",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "tomato sauce",
+      "frequency": 138,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Tomato sauce, canned, no salt added",
+          "food_id": 169074,
+          "normalized_description": "tomato sauce, canned, no salt added",
+          "portion_grams": {
+            "cup": 245.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 245.0
+          },
+          "score": 182.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Tomato sauce, for use with vegetables",
+          "food_id": 2710247,
+          "normalized_description": "tomato sauce, for use with vegetables",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 30.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Babyfood, dinner, macaroni, beef and tomato sauce, toddler",
+          "food_id": 168125,
+          "normalized_description": "babyfood, dinner, macaroni, beef and tomato sauce, toddler",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 16.0,
+            "undetermined": 16.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Babyfood, ravioli, cheese filled, with tomato sauce",
+          "food_id": 172257,
+          "normalized_description": "babyfood, ravioli, cheese filled, with tomato sauce",
+          "portion_grams": {
+            "item": 8.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 16.0,
+            "undetermined": 8.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Beans, baked, canned, with pork and tomato sauce",
+          "food_id": 173733,
+          "normalized_description": "beans, baked, canned, with pork and tomato sauce",
+          "portion_grams": {
+            "cup": 246.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 246.0
+          },
+          "score": 157.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "black beans",
+      "frequency": 99,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Black beans and brown rice",
+          "food_id": 2709035,
+          "normalized_description": "black beans and brown rice",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 170.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Black beans and white rice",
+          "food_id": 2708994,
+          "normalized_description": "black beans and white rice",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 170.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Black beans with meat",
+          "food_id": 2707366,
+          "normalized_description": "black beans with meat",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 130.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Black beans, NFS",
+          "food_id": 2707359,
+          "normalized_description": "black beans, nfs",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 92.0
+          },
+          "score": 172.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Black beans, from canned, fat added",
+          "food_id": 2707362,
+          "normalized_description": "black beans, from canned, fat added",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 92.0
+          },
+          "score": 172.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "cherries",
+      "frequency": 59,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Cherries, sweet, raw",
+          "food_id": 171719,
+          "normalized_description": "cherries, sweet, raw",
+          "portion_grams": {
+            "cup": 138.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 8.2
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Cherries, sweet, dark red, raw",
+          "food_id": 2346399,
+          "normalized_description": "cherries, sweet, dark red, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 234.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Cherries, sour, red, raw",
+          "food_id": 173954,
+          "normalized_description": "cherries, sour, red, raw",
+          "portion_grams": {
+            "cup": 103.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 103.0
+          },
+          "score": 184.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Cherries, sour, canned, water pack, drained",
+          "food_id": 167769,
+          "normalized_description": "cherries, sour, canned, water pack, drained",
+          "portion_grams": {
+            "cup": 168.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 168.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Cherries, sour, red, canned, extra heavy syrup pack, solids and liquids",
+          "food_id": 171717,
+          "normalized_description": "cherries, sour, red, canned, extra heavy syrup pack, solids and liquids",
+          "portion_grams": {
+            "cup": 261.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 261.0
+          },
+          "score": 176.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "spinach",
+      "frequency": 42,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Spinach, raw",
+          "food_id": 168462,
+          "normalized_description": "spinach, raw",
+          "portion_grams": {
+            "cup": 30.0,
+            "lb": 453.592,
+            "oz": 284.0,
+            "undetermined": 10.0
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Spinach, raw",
+          "food_id": 2709614,
+          "normalized_description": "spinach, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 0.6
+          },
+          "score": 234.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Spinach, baby",
+          "food_id": 1999632,
+          "normalized_description": "spinach, baby",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Spinach, mature",
+          "food_id": 1999633,
+          "normalized_description": "spinach, mature",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 85.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "New Zealand spinach, raw",
+          "food_id": 168440,
+          "normalized_description": "new zealand spinach, raw",
+          "portion_grams": {
+            "cup": 56.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 56.0
+          },
+          "score": 219.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "lentils",
+      "frequency": 21,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Lentils, mature seeds, cooked, boiled, with salt",
+          "food_id": 175254,
+          "normalized_description": "lentils, mature seeds, cooked, boiled, with salt",
+          "portion_grams": {
+            "cup": 198.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 198.0
+          },
+          "score": 240.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Lentils, mature seeds, cooked, boiled, without salt",
+          "food_id": 172421,
+          "normalized_description": "lentils, mature seeds, cooked, boiled, without salt",
+          "portion_grams": {
+            "cup": 198.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 12.3,
+            "undetermined": 12.3
+          },
+          "score": 240.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Lentils, dry",
+          "food_id": 2644283,
+          "normalized_description": "lentils, dry",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 35.0
+          },
+          "score": 226.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Lentils, pink or red, raw",
+          "food_id": 174284,
+          "normalized_description": "lentils, pink or red, raw",
+          "portion_grams": {
+            "cup": 192.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 192.0
+          },
+          "score": 184.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Lentils, raw",
+          "food_id": 172420,
+          "normalized_description": "lentils, raw",
+          "portion_grams": {
+            "cup": 192.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 12.0,
+            "undetermined": 12.0
+          },
+          "score": 184.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "garam masala",
+      "frequency": 17,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "foundation",
+          "description": "Apples, fuji, with skin, raw",
+          "food_id": 1750340,
+          "normalized_description": "apples, fuji, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Apples, gala, with skin, raw",
+          "food_id": 1750341,
+          "normalized_description": "apples, gala, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Apples, granny smith, with skin, raw",
+          "food_id": 1750342,
+          "normalized_description": "apples, granny smith, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Apples, honeycrisp, with skin, raw",
+          "food_id": 1750343,
+          "normalized_description": "apples, honeycrisp, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Apples, red delicious, with skin, raw",
+          "food_id": 1750339,
+          "normalized_description": "apples, red delicious, with skin, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 38.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "vegetable broth",
+      "frequency": 17,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, SWANSON, vegetable broth",
+          "food_id": 171180,
+          "normalized_description": "soup, swanson, vegetable broth",
+          "portion_grams": {
+            "cup": 220.0,
+            "lb": 453.592,
+            "oz": 928.0,
+            "undetermined": 220.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, vegetable broth, ready to serve",
+          "food_id": 171583,
+          "normalized_description": "soup, vegetable broth, ready to serve",
+          "portion_grams": {
+            "cup": 221.0,
+            "lb": 453.592,
+            "oz": 926.0,
+            "undetermined": 221.0
+          },
+          "score": 157.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, vegetable with beef broth, canned, condensed",
+          "food_id": 171164,
+          "normalized_description": "soup, vegetable with beef broth, canned, condensed",
+          "portion_grams": {
+            "cup": 246.0,
+            "lb": 453.592,
+            "oz": 298.0,
+            "undetermined": 246.0
+          },
+          "score": 87.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Soup, vegetable with beef broth, canned, prepared with equal volume water",
+          "food_id": 172921,
+          "normalized_description": "soup, vegetable with beef broth, canned, prepared with equal volume water",
+          "portion_grams": {
+            "cup": 241.0,
+            "lb": 453.592,
+            "oz": 241.0,
+            "undetermined": 241.0
+          },
+          "score": 87.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Raw vegetable, NFS",
+          "food_id": 2709763,
+          "normalized_description": "raw vegetable, nfs",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 60.0
+          },
+          "score": 64.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "figs",
+      "frequency": 15,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Figs, raw",
+          "food_id": 173021,
+          "normalized_description": "figs, raw",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 40.0
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "foundation",
+          "description": "Figs, dried, uncooked",
+          "food_id": 746768,
+          "normalized_description": "figs, dried, uncooked",
+          "portion_grams": {
+            "cup": 149.0,
+            "each": 8.4,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "racc": 140.0
+          },
+          "score": 230.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Figs, dried, uncooked",
+          "food_id": 174665,
+          "normalized_description": "figs, dried, uncooked",
+          "portion_grams": {
+            "cup": 149.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 8.4
+          },
+          "score": 180.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Figs, canned, extra heavy syrup pack, solids and liquids",
+          "food_id": 173025,
+          "normalized_description": "figs, canned, extra heavy syrup pack, solids and liquids",
+          "portion_grams": {
+            "cup": 261.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 261.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Figs, canned, heavy syrup pack, solids and liquids",
+          "food_id": 173024,
+          "normalized_description": "figs, canned, heavy syrup pack, solids and liquids",
+          "portion_grams": {
+            "cup": 259.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 28.0
+          },
+          "score": 176.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "frozen berries",
+      "frequency": 6,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "fndds",
+          "description": "Berries, NFS",
+          "food_id": 2709271,
+          "normalized_description": "berries, nfs",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 75.0
+          },
+          "score": 111.0
+        },
+        {
+          "dataset": "fndds",
+          "description": "Berries, frozen",
+          "food_id": 2709272,
+          "normalized_description": "berries, frozen",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 75.0
+          },
+          "score": 111.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Babyfood, banana with mixed berries, strained",
+          "food_id": 170999,
+          "normalized_description": "babyfood, banana with mixed berries, strained",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 99.0
+          },
+          "score": 81.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Cereals ready-to-eat, QUAKER, Cap'n Crunch's OOPS! All Berries Cereal",
+          "food_id": 173013,
+          "normalized_description": "cereals ready to eat, quaker, cap n crunch s oops all berries cereal",
+          "portion_grams": {
+            "cup": 32.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 32.0
+          },
+          "score": 81.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Goji berries, dried",
+          "food_id": 173032,
+          "normalized_description": "goji berries, dried",
+          "portion_grams": {
+            "lb": 453.592,
+            "oz": 28.3495,
+            "tbsp": 5.6,
+            "undetermined": 5.6
+          },
+          "score": 81.0
+        }
+      ]
+    },
+    {
+      "canonical_ingredient": "tofu",
+      "frequency": 4,
+      "mapping_status": "ambiguous",
+      "reason": "multiple plausible USDA candidates",
+      "top_candidates": [
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu, raw, firm, prepared with calcium sulfate",
+          "food_id": 172475,
+          "normalized_description": "tofu, raw, firm, prepared with calcium sulfate",
+          "portion_grams": {
+            "cup": 252.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 252.0
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu, raw, regular, prepared with calcium sulfate",
+          "food_id": 172476,
+          "normalized_description": "tofu, raw, regular, prepared with calcium sulfate",
+          "portion_grams": {
+            "cup": 248.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 248.0
+          },
+          "score": 244.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu yogurt",
+          "food_id": 167722,
+          "normalized_description": "tofu yogurt",
+          "portion_grams": {
+            "cup": 262.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 262.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu, dried-frozen (koyadofu)",
+          "food_id": 172450,
+          "normalized_description": "tofu, dried frozen koyadofu",
+          "portion_grams": {
+            "item": 17.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 17.0
+          },
+          "score": 176.0
+        },
+        {
+          "dataset": "sr_legacy",
+          "description": "Tofu, dried-frozen (koyadofu), prepared with calcium sulfate",
+          "food_id": 174303,
+          "normalized_description": "tofu, dried frozen koyadofu , prepared with calcium sulfate",
+          "portion_grams": {
+            "item": 17.0,
+            "lb": 453.592,
+            "oz": 28.3495,
+            "undetermined": 17.0
+          },
+          "score": 176.0
+        }
+      ]
+    }
+  ]
+}

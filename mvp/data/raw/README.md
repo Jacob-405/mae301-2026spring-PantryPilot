@@ -2,6 +2,12 @@
 
 Put original recipe source files here.
 
+Current primary offline source:
+
+- RecipeNLG CSV: `mvp/data/raw/recipenlg/RecipeNLG_dataset.csv`
+
+Other source folders may remain for comparison or historical debugging, but the MVP's current main offline recipe corpus is RecipeNLG.
+
 Recommended organization for large local datasets:
 
 - one subdirectory per source

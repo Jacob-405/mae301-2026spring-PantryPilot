@@ -43,7 +43,7 @@ class FavoritePlanStoreTests(unittest.TestCase):
         )
         self.plan = MealPlan(
             meals=(
-                PlannedMeal(day=1, slot=1, recipe=recipe, scaled_servings=2, incremental_cost=3.5),
+                PlannedMeal(day=1, slot=1, recipe=recipe, scaled_servings=2, incremental_cost=3.5, consumed_cost=1.75),
             ),
             shopping_list=(
                 ShoppingListItem(

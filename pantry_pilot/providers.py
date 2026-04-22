@@ -12,12 +12,13 @@ from urllib import error, parse, request
 
 from pantry_pilot.models import GroceryLocation, GroceryProduct, Recipe
 from pantry_pilot.normalization import normalize_ingredient_name, normalize_name, normalize_unit
+from pantry_pilot.recipe_estimation import estimate_calories_per_serving, estimate_recipe_nutrition
 from pantry_pilot.sample_data import sample_recipes
 
 
 KROGER_API_BASE_URL = "https://api.kroger.com/v1"
 KROGER_TOKEN_URL = "https://api.kroger.com/v1/connect/oauth2/token"
-DEFAULT_PROCESSED_RECIPES_PATH = Path("mvp/data/processed/recipes.imported.json")
+DEFAULT_PROCESSED_RECIPES_PATH = Path("mvp/data/processed/recipenlg-full-20260416T0625Z.json")
 
 
 class GroceryProvider(Protocol):
@@ -30,15 +31,51 @@ class GroceryProvider(Protocol):
         ...
 
 
+@dataclass(frozen=True)
+class RecipeRuntimeStatus:
+    processed_dataset_path: Path
+    processed_dataset_exists: bool
+    processed_recipe_count: int
+    active_source: str
+    fallback_active: bool
+    fallback_reason: str = ""
+    sample_recipe_count: int = 0
+
+
 class LocalRecipeProvider:
     def __init__(self, processed_dataset_path: str | Path | None = None) -> None:
         self.processed_dataset_path = Path(processed_dataset_path) if processed_dataset_path is not None else DEFAULT_PROCESSED_RECIPES_PATH
 
     def list_recipes(self) -> tuple[Recipe, ...]:
-        processed_recipes = load_processed_recipes(self.processed_dataset_path)
-        if processed_recipes:
-            return processed_recipes
-        return sample_recipes()
+        recipes, _ = resolve_recipe_runtime(self.processed_dataset_path)
+        return recipes
+
+
+def resolve_recipe_runtime(
+    processed_dataset_path: str | Path | None = None,
+) -> tuple[tuple[Recipe, ...], RecipeRuntimeStatus]:
+    dataset_path = Path(processed_dataset_path) if processed_dataset_path is not None else DEFAULT_PROCESSED_RECIPES_PATH
+    processed_recipes = load_processed_recipes(dataset_path)
+    if processed_recipes:
+        return processed_recipes, RecipeRuntimeStatus(
+            processed_dataset_path=dataset_path,
+            processed_dataset_exists=dataset_path.exists() and dataset_path.is_file(),
+            processed_recipe_count=len(processed_recipes),
+            active_source="processed-dataset",
+            fallback_active=False,
+        )
+
+    fallback_reason = _processed_dataset_failure_reason(dataset_path)
+    fallback_recipes = sample_recipes()
+    return fallback_recipes, RecipeRuntimeStatus(
+        processed_dataset_path=dataset_path,
+        processed_dataset_exists=dataset_path.exists() and dataset_path.is_file(),
+        processed_recipe_count=0,
+        active_source="sample-fallback",
+        fallback_active=True,
+        fallback_reason=fallback_reason,
+        sample_recipe_count=len(fallback_recipes),
+    )
 
 
 @lru_cache(maxsize=8)
@@ -61,6 +98,26 @@ def load_processed_recipes(processed_dataset_path: str | Path) -> tuple[Recipe, 
             return ()
         recipes.append(recipe)
     return tuple(sorted(recipes, key=lambda recipe: recipe.title))
+
+
+def _processed_dataset_failure_reason(processed_dataset_path: str | Path) -> str:
+    dataset_path = Path(processed_dataset_path)
+    if not dataset_path.exists():
+        return "processed dataset path does not exist"
+    if not dataset_path.is_file():
+        return "processed dataset path is not a file"
+    try:
+        payload = json.loads(dataset_path.read_text(encoding="utf-8"))
+    except OSError:
+        return "processed dataset could not be read"
+    except json.JSONDecodeError:
+        return "processed dataset is not valid JSON"
+    rows = payload.get("recipes")
+    if not isinstance(rows, list):
+        return "processed dataset is missing a valid recipes list"
+    if not rows:
+        return "processed dataset has no recipes"
+    return "processed dataset rows could not be loaded safely"
 
 
 def _load_processed_recipe_row(row: object) -> Recipe | None:
@@ -92,12 +149,15 @@ def _load_processed_recipe_row(row: object) -> Recipe | None:
         title = str(row["title"]).strip()
         cuisine = normalize_name(str(row["cuisine"]))
         servings = int(row["servings"])
-        prep_time_minutes = int(row["prep_time_minutes"])
+        prep_time_minutes = _load_processed_prep_time(row.get("prep_time_minutes"))
         calories_per_serving = _load_processed_calories(row.get("calories"))
     except (TypeError, ValueError):
         return None
-    if not recipe_id or not title or servings <= 0 or prep_time_minutes < 0:
+    if not recipe_id or not title or servings <= 0:
         return None
+    nutrition_per_serving = estimate_recipe_nutrition(ingredients, servings).per_serving
+    if calories_per_serving is None:
+        calories_per_serving = estimate_calories_per_serving(ingredients, servings)
     return Recipe(
         recipe_id=recipe_id,
         title=title,
@@ -110,6 +170,7 @@ def _load_processed_recipe_row(row: object) -> Recipe | None:
         allergens=allergens,
         ingredients=ingredients,
         steps=steps,
+        estimated_nutrition_per_serving=nutrition_per_serving,
     )
 
 
@@ -161,15 +222,27 @@ def _load_processed_allergens(value: object) -> frozenset[str] | None:
     return frozenset(normalize_name(str(item)) for item in allergens_value if normalize_name(str(item)))
 
 
-def _load_processed_calories(value: object) -> int:
+def _load_processed_prep_time(value: object) -> int | None:
+    try:
+        prep_time = int(value)
+    except (TypeError, ValueError):
+        return None
+    if prep_time <= 0:
+        return None
+    return prep_time
+
+
+def _load_processed_calories(value: object) -> int | None:
     if not isinstance(value, dict):
-        return 0
+        return None
     calories_per_serving = value.get("calories_per_serving")
     try:
         calories = int(calories_per_serving)
     except (TypeError, ValueError):
-        return 0
-    return max(calories, 0)
+        return None
+    if calories < 0:
+        return None
+    return calories
 
 
 class ProviderUnavailableError(RuntimeError):
@@ -185,59 +258,106 @@ class MockGroceryProvider:
 
     def __init__(self) -> None:
         self._catalog = {
+            "apple": GroceryProduct("apple", 1.0, "item", 0.75, source=self.provider_name),
             "avocado": GroceryProduct("avocado", 1.0, "item", 0.9, source=self.provider_name),
+            "bacon": GroceryProduct("bacon", 12.0, "slice", 5.5, source=self.provider_name),
+            "baking powder": GroceryProduct("baking powder", 24.0, "tsp", 2.2, source=self.provider_name),
+            "baking soda": GroceryProduct("baking soda", 48.0, "tsp", 1.6, source=self.provider_name),
             "banana": GroceryProduct("banana", 1.0, "item", 0.35, source=self.provider_name),
             "bell pepper": GroceryProduct("bell pepper", 1.0, "item", 1.0, source=self.provider_name),
             "black pepper": GroceryProduct("black pepper", 10.0, "tsp", 2.0, source=self.provider_name),
             "black beans": GroceryProduct("black beans", 1.0, "can", 1.1, source=self.provider_name),
+            "blueberries": GroceryProduct("blueberries", 2.0, "cup", 4.5, source=self.provider_name),
             "bread": GroceryProduct("bread", 20.0, "slice", 2.8, source=self.provider_name),
+            "bread crumbs": GroceryProduct("bread crumbs", 4.0, "cup", 2.4, source=self.provider_name),
             "broccoli": GroceryProduct("broccoli", 3.0, "cup", 2.4, source=self.provider_name),
             "butter": GroceryProduct("butter", 16.0, "tbsp", 4.0, source=self.provider_name),
+            "buttermilk": GroceryProduct("buttermilk", 4.0, "cup", 2.8, source=self.provider_name),
             "canned tomatoes": GroceryProduct("canned tomatoes", 1.0, "can", 1.3, source=self.provider_name),
             "carrot": GroceryProduct("carrot", 1.0, "item", 0.25, source=self.provider_name),
             "celery": GroceryProduct("celery", 1.0, "stalk", 0.2, source=self.provider_name),
             "cheddar cheese": GroceryProduct("cheddar cheese", 2.0, "cup", 3.8, source=self.provider_name),
+            "chicken": GroceryProduct("chicken", 1.0, "lb", 4.4, source=self.provider_name),
             "chicken breast": GroceryProduct("chicken breast", 1.0, "lb", 4.6, source=self.provider_name),
+            "chicken broth": GroceryProduct("chicken broth", 4.0, "cup", 2.2, source=self.provider_name),
+            "chicken gravy": GroceryProduct("chicken gravy", 1.0, "item", 2.2, source=self.provider_name),
             "chickpeas": GroceryProduct("chickpeas", 1.0, "can", 1.1, source=self.provider_name),
             "chili powder": GroceryProduct("chili powder", 4.0, "tbsp", 2.1, source=self.provider_name),
             "cinnamon": GroceryProduct("cinnamon", 12.0, "tsp", 1.8, source=self.provider_name),
+            "cilantro": GroceryProduct("cilantro", 12.0, "tbsp", 1.3, source=self.provider_name),
+            "cream cheese": GroceryProduct("cream cheese", 1.0, "item", 2.5, source=self.provider_name),
+            "cream of chicken soup": GroceryProduct("cream of chicken soup", 1.0, "can", 1.8, source=self.provider_name),
+            "cream of mushroom soup": GroceryProduct("cream of mushroom soup", 1.0, "can", 1.8, source=self.provider_name),
             "corn": GroceryProduct("corn", 3.0, "cup", 1.9, source=self.provider_name),
+            "cornstarch": GroceryProduct("cornstarch", 16.0, "tbsp", 2.0, source=self.provider_name),
+            "cocoa": GroceryProduct("cocoa", 24.0, "tbsp", 3.2, source=self.provider_name),
             "cucumber": GroceryProduct("cucumber", 1.0, "item", 0.9, source=self.provider_name),
             "cumin": GroceryProduct("cumin", 12.0, "tsp", 2.1, source=self.provider_name),
             "curry powder": GroceryProduct("curry powder", 4.0, "tbsp", 2.4, source=self.provider_name),
             "eggs": GroceryProduct("eggs", 12.0, "item", 3.0, source=self.provider_name),
+            "evaporated milk": GroceryProduct("evaporated milk", 1.0, "item", 1.7, source=self.provider_name),
             "feta": GroceryProduct("feta", 1.0, "cup", 3.7, source=self.provider_name),
             "flour": GroceryProduct("flour", 20.0, "cup", 3.4, source=self.provider_name),
+            "flour tortillas": GroceryProduct("flour tortillas", 10.0, "item", 3.0, source=self.provider_name),
             "frozen berries": GroceryProduct("frozen berries", 4.0, "cup", 4.4, source=self.provider_name),
+            "garam masala": GroceryProduct("garam masala", 12.0, "tsp", 3.0, source=self.provider_name),
             "garlic": GroceryProduct("garlic", 8.0, "clove", 0.8, source=self.provider_name),
             "garlic powder": GroceryProduct("garlic powder", 12.0, "tsp", 2.1, source=self.provider_name),
             "ginger": GroceryProduct("ginger", 12.0, "tbsp", 2.5, source=self.provider_name),
             "granola": GroceryProduct("granola", 3.0, "cup", 3.6, source=self.provider_name),
+            "green onion": GroceryProduct("green onion", 2.0, "cup", 1.2, source=self.provider_name),
+            "ground beef": GroceryProduct("ground beef", 1.0, "lb", 4.8, source=self.provider_name),
             "ground turkey": GroceryProduct("ground turkey", 1.0, "lb", 4.2, source=self.provider_name),
+            "heavy cream": GroceryProduct("heavy cream", 2.0, "cup", 4.4, source=self.provider_name),
             "honey": GroceryProduct("honey", 16.0, "tbsp", 4.0, source=self.provider_name),
+            "hot sauce": GroceryProduct("hot sauce", 16.0, "tbsp", 2.4, source=self.provider_name),
             "lemon": GroceryProduct("lemon", 1.0, "item", 0.75, source=self.provider_name),
+            "lemon juice": GroceryProduct("lemon juice", 8.0, "tbsp", 2.0, source=self.provider_name),
             "lentils": GroceryProduct("lentils", 4.0, "cup", 2.9, source=self.provider_name),
             "lime": GroceryProduct("lime", 1.0, "item", 0.5, source=self.provider_name),
+            "lime juice": GroceryProduct("lime juice", 8.0, "tbsp", 2.2, source=self.provider_name),
+            "mayonnaise": GroceryProduct("mayonnaise", 2.0, "cup", 3.0, source=self.provider_name),
             "milk": GroceryProduct("milk", 8.0, "cup", 3.2, source=self.provider_name),
+            "mozzarella cheese": GroceryProduct("mozzarella cheese", 2.0, "cup", 3.9, source=self.provider_name),
+            "mushroom": GroceryProduct("mushroom", 2.0, "cup", 2.6, source=self.provider_name),
+            "mustard": GroceryProduct("mustard", 12.0, "tbsp", 2.3, source=self.provider_name),
+            "nutmeg": GroceryProduct("nutmeg", 24.0, "tsp", 3.0, source=self.provider_name),
             "olive oil": GroceryProduct("olive oil", 32.0, "tbsp", 6.4, source=self.provider_name),
             "onion": GroceryProduct("onion", 1.0, "item", 0.7, source=self.provider_name),
             "oregano": GroceryProduct("oregano", 12.0, "tsp", 2.0, source=self.provider_name),
+            "orange juice": GroceryProduct("orange juice", 8.0, "cup", 4.0, source=self.provider_name),
             "parmesan": GroceryProduct("parmesan", 1.5, "cup", 4.6, source=self.provider_name),
             "pasta": GroceryProduct("pasta", 16.0, "oz", 1.8, source=self.provider_name),
             "paprika": GroceryProduct("paprika", 12.0, "tsp", 2.0, source=self.provider_name),
+            "parsley": GroceryProduct("parsley", 16.0, "tbsp", 1.5, source=self.provider_name),
             "peanut butter": GroceryProduct("peanut butter", 16.0, "tbsp", 2.4, source=self.provider_name),
+            "pecans": GroceryProduct("pecans", 2.0, "cup", 7.5, source=self.provider_name),
+            "pineapple": GroceryProduct("pineapple", 4.0, "cup", 3.0, source=self.provider_name),
+            "potato": GroceryProduct("potato", 1.0, "item", 0.7, source=self.provider_name),
+            "raisins": GroceryProduct("raisins", 2.0, "cup", 3.2, source=self.provider_name),
+            "red pepper flakes": GroceryProduct("red pepper flakes", 12.0, "tsp", 2.0, source=self.provider_name),
             "rice": GroceryProduct("rice", 8.0, "cup", 4.0, source=self.provider_name),
+            "rice vinegar": GroceryProduct("rice vinegar", 16.0, "tbsp", 2.5, source=self.provider_name),
             "rolled oats": GroceryProduct("rolled oats", 10.0, "cup", 3.8, source=self.provider_name),
             "salt": GroceryProduct("salt", 26.0, "tsp", 1.0, source=self.provider_name),
             "salsa": GroceryProduct("salsa", 2.0, "cup", 2.5, source=self.provider_name),
+            "sesame oil": GroceryProduct("sesame oil", 16.0, "tbsp", 4.0, source=self.provider_name),
+            "sour cream": GroceryProduct("sour cream", 2.0, "cup", 2.8, source=self.provider_name),
+            "stuffing mix": GroceryProduct("stuffing mix", 1.0, "item", 2.6, source=self.provider_name),
+            "sugar": GroceryProduct("sugar", 10.0, "cup", 3.0, source=self.provider_name),
             "soy sauce": GroceryProduct("soy sauce", 16.0, "tbsp", 2.1, source=self.provider_name),
             "spinach": GroceryProduct("spinach", 5.0, "cup", 2.7, source=self.provider_name),
+            "strawberries": GroceryProduct("strawberries", 2.0, "cup", 4.0, source=self.provider_name),
             "tofu": GroceryProduct("tofu", 1.0, "block", 2.2, source=self.provider_name),
             "tomato": GroceryProduct("tomato", 1.0, "item", 0.8, source=self.provider_name),
             "tomato sauce": GroceryProduct("tomato sauce", 1.0, "can", 1.6, source=self.provider_name),
+            "turmeric": GroceryProduct("turmeric", 12.0, "tsp", 2.1, source=self.provider_name),
+            "vanilla extract": GroceryProduct("vanilla extract", 24.0, "tsp", 5.5, source=self.provider_name),
             "vegetable broth": GroceryProduct("vegetable broth", 4.0, "cup", 2.0, source=self.provider_name),
             "vegetable oil": GroceryProduct("vegetable oil", 32.0, "tbsp", 4.8, source=self.provider_name),
+            "walnuts": GroceryProduct("walnuts", 2.0, "cup", 7.0, source=self.provider_name),
             "water": GroceryProduct("water", 16.0, "cup", 0.0, source=self.provider_name),
+            "worcestershire sauce": GroceryProduct("worcestershire sauce", 16.0, "tbsp", 3.0, source=self.provider_name),
             "yogurt": GroceryProduct("yogurt", 4.0, "cup", 3.5, source=self.provider_name),
             "zucchini": GroceryProduct("zucchini", 1.0, "item", 0.85, source=self.provider_name),
         }

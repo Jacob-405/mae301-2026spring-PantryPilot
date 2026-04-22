@@ -1,0 +1,1369 @@
+{
+  "source_urls": {
+    "foundation": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2025-12-18.zip",
+    "sr_legacy": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json_2018-04.zip",
+    "fndds": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_survey_food_json_2024-10-31.zip"
+  },
+  "sample_size": 20,
+  "clean_match_count": 19,
+  "clean_match_ratio": 0.95,
+  "top_match_macro_coverage_count": 12,
+  "top_match_macro_coverage_ratio": 0.6,
+  "results": [
+    {
+      "ingredient": "apple",
+      "search": "apple",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "foundation",
+          "fdcId": 1750340,
+          "description": "Apples, fuji, with skin, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 1750341,
+          "description": "Apples, gala, with skin, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 1750343,
+          "description": "Apples, honeycrisp, with skin, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 1750342,
+          "description": "Apples, granny smith, with skin, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 1750339,
+          "description": "Apples, red delicious, with skin, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "black beans",
+      "search": "beans black",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "foundation",
+          "fdcId": 2644285,
+          "description": "Beans, black, canned, sodium added, drained and rinsed",
+          "score": 146,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 173734,
+          "description": "Beans, black, mature seeds, raw",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 175186,
+          "description": "Beans, black turtle, mature seeds, raw",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 175188,
+          "description": "Beans, black turtle, mature seeds, canned",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 175238,
+          "description": "Beans, black, mature seeds, canned, low sodium",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "broccoli",
+      "search": "broccoli",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "foundation",
+          "fdcId": 747447,
+          "description": "Broccoli, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 170379,
+          "description": "Broccoli, raw",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 170381,
+          "description": "Broccoli raab, raw",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 169329,
+          "description": "Broccoli, leaves, raw",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 169331,
+          "description": "Broccoli, stalks, raw",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "carrot",
+      "search": "carrot",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "foundation",
+          "fdcId": 2258587,
+          "description": "Carrots, baby, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 2258586,
+          "description": "Carrots, mature, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 170393,
+          "description": "Carrots, raw",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 168568,
+          "description": "Carrots, baby, raw",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 170500,
+          "description": "Carrot, dehydrated",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "cheddar cheese",
+      "search": "cheddar cheese",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "sr_legacy",
+          "fdcId": 170896,
+          "description": "Cheese spread, American or Cheddar cheese base, reduced fat",
+          "score": 116,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 173898,
+          "description": "Cereals, QUAKER, corn grits, instant, cheddar cheese flavor, dry",
+          "score": 116,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2705773,
+          "description": "Cheese spread, American or Cheddar cheese base",
+          "score": 106,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2705768,
+          "description": "Cheese spread, American or Cheddar cheese base, reduced fat",
+          "score": 106,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 328637,
+          "description": "Cheese, cheddar",
+          "score": 101,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "partial_match",
+      "reviewed_reason": "nearest USDA candidate in pilot was a cheese-spread subtype; needs curated disambiguation to regular cheddar"
+    },
+    {
+      "ingredient": "chicken breast",
+      "search": "chicken breast",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "foundation",
+          "fdcId": 2727569,
+          "description": "Chicken, breast, meat and skin, raw",
+          "score": 156,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 2646170,
+          "description": "Chicken, breast, boneless, skinless, raw",
+          "score": 156,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174608,
+          "description": "Chicken breast, roll, oven-roasted",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172963,
+          "description": "Chicken breast, oven-roasted, fat-free, sliced",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172962,
+          "description": "Chicken breast, fat-free, mesquite flavor, sliced",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "cilantro",
+      "search": "coriander cilantro leaves",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "sr_legacy",
+          "fdcId": 169997,
+          "description": "Coriander (cilantro) leaves, raw",
+          "score": 194,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 170922,
+          "description": "Spices, coriander seed",
+          "score": 78,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 170921,
+          "description": "Spices, coriander leaf, dried",
+          "score": 78,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172242,
+          "description": "Seasoning mix, dry, sazon, coriander & annatto",
+          "score": 78,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 168487,
+          "description": "Taro leaves, raw",
+          "score": 38,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "cream cheese",
+      "search": "cream cheese",
+      "expected_kind": "basic_processed",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "foundation",
+          "fdcId": 2346385,
+          "description": "Cream cheese, full fat, block",
+          "score": 146,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2705762,
+          "description": "Cream cheese, light",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2705769,
+          "description": "Cream cheese, fat free",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2705760,
+          "description": "Cream cheese, regular, plain",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2705761,
+          "description": "Cream cheese, regular, flavored",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "flour tortillas",
+      "search": "flour tortilla",
+      "expected_kind": "prepared_generic",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "fndds",
+          "fdcId": 2708522,
+          "description": "Taco, flour tortilla, beef, cheese",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2708524,
+          "description": "Taco, flour tortilla, pork, cheese",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2708526,
+          "description": "Taco, flour tortilla, chicken, cheese",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2708528,
+          "description": "Taco, flour tortilla, with beans, cheese",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2708523,
+          "description": "Taco, flour tortilla, beef, with beans, cheese",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "partial_match",
+      "reviewed_reason": "pilot favored assembled taco records instead of the tortilla ingredient"
+    },
+    {
+      "ingredient": "garam masala",
+      "search": "garam masala",
+      "expected_kind": "spice_blend",
+      "verdict": "no_clean_match",
+      "reason": "top USDA candidates remain ambiguous, branded, or prepared relative to PantryPilot canonical ingredient",
+      "top_candidates": [
+        {
+          "source": "sr_legacy",
+          "fdcId": 171181,
+          "description": "SMART SOUP, Indian Bean Masala",
+          "score": 38,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "no_clean_match",
+      "reviewed_reason": "no clean generic USDA spice-blend match in the pilot"
+    },
+    {
+      "ingredient": "granola",
+      "search": "granola",
+      "expected_kind": "basic_processed",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "sr_legacy",
+          "fdcId": 171646,
+          "description": "Cereals ready-to-eat, granola, homemade",
+          "score": 98,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174996,
+          "description": "Muffins, English, mixed-grain (includes granola)",
+          "score": 98,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174658,
+          "description": "Cereals ready-to-eat, QUAKER, Natural Granola Apple Cranberry Almond",
+          "score": 98,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172976,
+          "description": "Cereals ready-to-eat, QUAKER, Low Fat 100% Natural Granola with Raisins",
+          "score": 98,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174654,
+          "description": "Cereals ready-to-eat, NATURE'S PATH, Organic FLAX PLUS, Pumpkin Granola",
+          "score": 98,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "lentils",
+      "search": "lentils",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "foundation",
+          "fdcId": 2644283,
+          "description": "Lentils, dry",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172420,
+          "description": "Lentils, raw",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 168427,
+          "description": "Lentils, sprouted, raw",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174284,
+          "description": "Lentils, pink or red, raw",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2707423,
+          "description": "Lentils, NFS",
+          "score": 108,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "olive oil",
+      "search": "olive oil",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "fndds",
+          "fdcId": 2710186,
+          "description": "Olive oil",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 2747652,
+          "description": "Anchovies, canned in olive oil, with salt, drained",
+          "score": 126,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 171443,
+          "description": "Mayonnaise, reduced fat, with olive oil",
+          "score": 116,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2710221,
+          "description": "Mayonnaise, reduced fat,  with olive oil",
+          "score": 106,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 1750351,
+          "description": "Oil, olive, extra light",
+          "score": 101,
+          "macro_fields_present": []
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "rice",
+      "search": "rice",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "foundation",
+          "fdcId": 2710825,
+          "description": "Rice, black, unenriched, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 2710838,
+          "description": "Rice, red, unenriched, dry, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 2512380,
+          "description": "Rice, brown, long grain, unenriched, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "foundation",
+          "fdcId": 2512381,
+          "description": "Rice, white, long grain, unenriched, raw",
+          "score": 138,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 169713,
+          "description": "Rice bran, crude",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "sour cream",
+      "search": "sour cream",
+      "expected_kind": "basic_processed",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "sr_legacy",
+          "fdcId": 173443,
+          "description": "Sour cream, light",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 173444,
+          "description": "Sour cream, fat free",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 173442,
+          "description": "Sour cream, reduced fat",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 170869,
+          "description": "Sour cream, imitation, cultured",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "fndds",
+          "fdcId": 2705615,
+          "description": "Sour cream, light",
+          "score": 126,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "soy sauce",
+      "search": "soy sauce tamari",
+      "expected_kind": "basic_processed",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "sr_legacy",
+          "fdcId": 174278,
+          "description": "Soy sauce made from soy (tamari)",
+          "score": 129,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174277,
+          "description": "Soy sauce made from soy and wheat (shoyu)",
+          "score": 76,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174279,
+          "description": "Soy sauce made from hydrolyzed vegetable protein",
+          "score": 76,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172473,
+          "description": "Soy sauce made from soy and wheat (shoyu), low sodium",
+          "score": 76,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172474,
+          "description": "Soy sauce, reduced sodium, made from hydrolyzed vegetable protein",
+          "score": 76,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "stuffing mix",
+      "search": "stuffing mix",
+      "expected_kind": "prepared_generic",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "sr_legacy",
+          "fdcId": 173254,
+          "description": "George Weston Bakeries, Brownberry Sage and Onion Stuffing Mix, dry",
+          "score": 136,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174930,
+          "description": "Bread, stuffing, dry mix",
+          "score": 91,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174931,
+          "description": "Bread, stuffing, dry mix, prepared",
+          "score": 91,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172692,
+          "description": "Bread, stuffing, cornbread, dry mix",
+          "score": 91,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172693,
+          "description": "Bread, stuffing, cornbread, dry mix, prepared",
+          "score": 91,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "partial_match",
+      "reviewed_reason": "usable generic data exists, but pilot favored branded/packaged stuffing records and needs policy review"
+    },
+    {
+      "ingredient": "tofu",
+      "search": "tofu",
+      "expected_kind": "basic_processed",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "sr_legacy",
+          "fdcId": 172451,
+          "description": "Tofu, fried",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172450,
+          "description": "Tofu, dried-frozen (koyadofu)",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174291,
+          "description": "Tofu, hard, prepared with nigari",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174280,
+          "description": "Tofu, salted and fermented (fuyu)",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174290,
+          "description": "Tofu, extra firm, prepared with nigari",
+          "score": 118,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "partial_match",
+      "reviewed_reason": "pilot favored fried tofu rather than a plain tofu baseline"
+    },
+    {
+      "ingredient": "zucchini",
+      "search": "zucchini squash",
+      "expected_kind": "commodity",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "foundation",
+          "fdcId": 2685568,
+          "description": "Squash, summer, green, zucchini, includes skin, raw",
+          "score": 111,
+          "macro_fields_present": [
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 168565,
+          "description": "Squash, zucchini, baby, raw",
+          "score": 91,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 169291,
+          "description": "Squash, summer, zucchini, includes skin, raw",
+          "score": 91,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 168471,
+          "description": "Squash, summer, zucchini, italian style, canned",
+          "score": 91,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 168469,
+          "description": "Squash, summer, zucchini, includes skin, frozen, unprepared",
+          "score": 81,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    },
+    {
+      "ingredient": "cream of mushroom soup",
+      "search": "cream of mushroom soup",
+      "expected_kind": "prepared_generic",
+      "verdict": "clean_match",
+      "reason": "",
+      "top_candidates": [
+        {
+          "source": "sr_legacy",
+          "fdcId": 171155,
+          "description": "Soup, cream of mushroom, canned, condensed",
+          "score": 127,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172887,
+          "description": "Soup, cream of mushroom, canned, condensed, reduced sodium",
+          "score": 127,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 171607,
+          "description": "Soup, cream of mushroom, low sodium, ready-to-serve, canned",
+          "score": 127,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 172915,
+          "description": "Soup, cream of mushroom, canned, prepared with equal volume water",
+          "score": 127,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        },
+        {
+          "source": "sr_legacy",
+          "fdcId": 174540,
+          "description": "Soup, cream of mushroom, canned, prepared with equal volume low fat (2%) milk",
+          "score": 127,
+          "macro_fields_present": [
+            "calories",
+            "carbs",
+            "fat",
+            "protein"
+          ]
+        }
+      ],
+      "reviewed_verdict": "clean_match",
+      "reviewed_reason": ""
+    }
+  ],
+  "reviewed_summary": {
+    "clean_match": 15,
+    "partial_match": 4,
+    "no_clean_match": 1
+  },
+  "reviewed_clean_match_ratio": 0.75
+}

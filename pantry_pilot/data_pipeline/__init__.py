@@ -15,6 +15,7 @@ from pantry_pilot.data_pipeline.importer import (
     ImportRejection,
     ImportResult,
     import_kaggle_recipe_directory,
+    import_recipenlg_dataset,
     import_recipes_from_file,
     import_recipes_from_files,
 )
@@ -58,6 +59,7 @@ __all__ = [
     "build_diversity_metadata",
     "compare_recipes",
     "import_kaggle_recipe_directory",
+    "import_recipenlg_dataset",
     "import_recipes_from_file",
     "import_recipes_from_files",
     "validate_recipe",

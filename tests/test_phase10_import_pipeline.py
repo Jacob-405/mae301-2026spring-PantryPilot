@@ -229,7 +229,7 @@ class Phase10ImportPipelineTests(unittest.TestCase):
                                 "servings": 2,
                                 "allergen_completeness": "complete",
                                 "allergens": [],
-                                "ingredients": [{"name": "tomatoes", "quantity": 2, "unit": "cups"}],
+                                "ingredients": [{"name": "tomatoes", "quantity": 2, "unit": "blocks"}],
                                 "instructions": ["Cook tomatoes."],
                             }
                         ]

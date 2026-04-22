@@ -4,6 +4,14 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class NutritionEstimate:
+    calories: int
+    protein_grams: float
+    carbs_grams: float
+    fat_grams: float
+
+
+@dataclass(frozen=True)
 class RecipeIngredient:
     name: str
     quantity: float
@@ -16,13 +24,14 @@ class Recipe:
     title: str
     cuisine: str
     base_servings: int
-    estimated_calories_per_serving: int
-    prep_time_minutes: int
+    estimated_calories_per_serving: int | None
+    prep_time_minutes: int | None
     meal_types: tuple[str, ...]
     diet_tags: frozenset[str]
     allergens: frozenset[str] | None
     ingredients: tuple[RecipeIngredient, ...]
     steps: tuple[str, ...]
+    estimated_nutrition_per_serving: NutritionEstimate | None = None
 
 
 @dataclass(frozen=True)
@@ -46,6 +55,35 @@ class GroceryLocation:
 
 
 @dataclass(frozen=True)
+class UserNutritionProfile:
+    age_years: int
+    sex: str
+    height_cm: float
+    weight_kg: float
+    activity_level: str
+    planning_goal: str = "maintain"
+
+
+@dataclass(frozen=True)
+class PersonalNutritionTargets:
+    source: str
+    guidance_note: str
+    estimated_daily_calories: int
+    calorie_target_min: int
+    calorie_target_max: int
+    protein_target_min_grams: float
+    protein_target_max_grams: float
+    carbs_target_min_grams: float
+    carbs_target_max_grams: float
+    fat_target_min_grams: float
+    fat_target_max_grams: float
+    produce_target_cups: float
+    grains_target_ounces: float
+    protein_foods_target_ounces: float
+    dairy_target_cups: float | None = None
+
+
+@dataclass(frozen=True)
 class PlannerRequest:
     weekly_budget: float
     servings: int
@@ -64,6 +102,8 @@ class PlannerRequest:
     daily_calorie_target_max: int = 2200
     variety_preference: str = "balanced"
     leftovers_mode: str = "off"
+    user_profile: UserNutritionProfile | None = None
+    personal_targets: PersonalNutritionTargets | None = None
 
 
 @dataclass(frozen=True)
@@ -73,6 +113,8 @@ class PlannedMeal:
     recipe: Recipe
     scaled_servings: int
     incremental_cost: float
+    consumed_cost: float | None = None
+    meal_role: str = "main"
 
 
 @dataclass(frozen=True)
@@ -84,6 +126,8 @@ class ShoppingListItem:
     package_quantity: float = 0.0
     package_unit: str = ""
     purchased_quantity: float = 0.0
+    carryover_used_quantity: float = 0.0
+    leftover_quantity_remaining: float = 0.0
     estimated_cost: float | None = None
     pricing_source: str = "mock"
 

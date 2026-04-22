@@ -55,10 +55,22 @@ Optional output path:
 .\.venv\Scripts\python.exe -m pantry_pilot.data_pipeline.cli mvp/data/raw/example_recipes.json --processed-path mvp/data/processed/recipes.imported.json
 ```
 
-The importer writes:
+Generic importer outputs:
 
 - `mvp/data/processed/recipes.imported.json`
 - `mvp/data/processed/recipes.imported.stats.json`
+
+Current main offline dataset:
+
+- `mvp/data/processed/recipenlg-full-20260416T0625Z.json`
+- `mvp/data/processed/recipenlg-full-20260416T0625Z.stats.json`
+- `mvp/data/processed/recipenlg-full-20260416T0625Z.checkpoint.json`
+
+RecipeNLG full import command used for the current main dataset:
+
+```powershell
+.\.venv\Scripts\python.exe -m pantry_pilot.data_pipeline.cli mvp/data/raw/recipenlg/RecipeNLG_dataset.csv --recipenlg --processed-path mvp/data/processed/recipenlg-full-20260416T0625Z.json --max-output-recipes 3000000 --progress-every 100000 --checkpoint-every 100000
+```
 
 The stats file summarizes:
 
@@ -75,7 +87,7 @@ The stats file summarizes:
 
 The app will:
 
-- prefer `mvp/data/processed/recipes.imported.json` when a valid processed dataset is present
+- prefer `mvp/data/processed/recipenlg-full-20260416T0625Z.json` when a valid processed dataset is present
 - fall back to the built-in curated sample dataset otherwise
 
 ## Run tests
@@ -98,3 +110,4 @@ Run only importer and dataset tests:
 - Unknown or incomplete allergen metadata is treated as unsafe.
 - Grocery pricing still falls back to the local mock provider when store pricing is unavailable.
 - The processed dataset integration is conservative: invalid processed files cleanly fall back to the built-in sample dataset.
+- For long RecipeNLG runs in this environment, use a direct attached `.\.venv\Scripts\python.exe ...` invocation rather than `Start-Process`.

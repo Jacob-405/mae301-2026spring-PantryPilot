@@ -1,48 +1,73 @@
 # PantryPilot
 
-PantryPilot is a deterministic weekly meal-planning app built with Streamlit. It plans seven days of meals from local recipe data, filters unsafe recipes when allergen data is unknown, limits repetition, and estimates shopping costs from either:
+PantryPilot is the main project in this repository. It is a deterministic weekly meal-planning app built with Streamlit and local-first data. The current system plans seven days of meals from real recipe data, applies hard safety checks for allergens and exclusions, estimates nutrition and grocery cost, tracks pantry carryover, and exposes planner reasoning for verification.
 
-- a built-in mock grocery catalog
-- Kroger or Fry's pricing when API credentials are configured
+The repo still contains earlier milestone material, but the submission-ready center of gravity is now PantryPilot rather than the original nanoGPT exploration.
 
-If Kroger credentials are missing, no nearby store is selected, or Kroger pricing requests fail, PantryPilot automatically falls back to mock pricing.
+## What PantryPilot Does
 
-## Requirements
+- accepts weekly budget, servings, cuisine preferences, allergies, excluded ingredients, diet restrictions, pantry staples, prep-time limits, meal slots, and optional personal nutrition guidance
+- builds a deterministic weekly plan with main/side roles, shopping list output, pantry carryover handling, and budget enforcement
+- uses local recipe/runtime data by default and optionally Kroger or Fry's pricing when credentials are configured
+- keeps unknown allergen data unsafe by default
+- exposes planner diagnostics, daily nutrient state, and acceptance-style checks for balance and pairing quality
+
+## Repo Map
+
+- Proposal: [proposal/README.md](/C:/Users/Legom/mae301-2026spring-PantryPilot/proposal/README.md)
+- Phase 2 report: [phase2/report.md](/C:/Users/Legom/mae301-2026spring-PantryPilot/phase2/report.md)
+- MVP report: [mvp/report.md](/C:/Users/Legom/mae301-2026spring-PantryPilot/mvp/report.md)
+- App entrypoint: [mvp/app.py](/C:/Users/Legom/mae301-2026spring-PantryPilot/mvp/app.py)
+- Main code: [pantry_pilot](/C:/Users/Legom/mae301-2026spring-PantryPilot/pantry_pilot)
+- Tests: [tests](/C:/Users/Legom/mae301-2026spring-PantryPilot/tests)
+- Runtime and data docs: [docs/README.md](/C:/Users/Legom/mae301-2026spring-PantryPilot/docs/README.md)
+
+## Submission-Facing Structure
+
+The folders a grader should care about first are:
+
+- `proposal/`
+- `phase2/`
+- `mvp/`
+- `docs/`
+- `pantry_pilot/`
+- `tests/`
+
+Other top-level items such as local caches, generated artifacts, and machine-specific state are intentionally ignored or kept out of the submission flow.
+
+## Run PantryPilot
+
+Requirements:
 
 - Python 3.12
-- Windows PowerShell (commands below assume Windows)
+- Windows PowerShell for the commands below
 
-## Local setup
-
-1. Create and activate a virtual environment.
+Setup:
 
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-```
-
-2. Install dependencies.
-
-```powershell
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-## Kroger or Fry's pricing setup
+Start the app:
 
-PantryPilot reads Kroger credentials from environment variables only.
+```powershell
+python -m streamlit run mvp/app.py
+```
 
-Required environment variables:
+## Pricing Modes
+
+PantryPilot works without API keys by using mock grocery pricing.
+
+For Kroger or Fry's pricing, set:
 
 - `KROGER_CLIENT_ID`
 - `KROGER_CLIENT_SECRET`
+- optional: `KROGER_API_SCOPE` with default `product.compact`
 
-Optional environment variable:
-
-- `KROGER_API_SCOPE`
-  Default: `product.compact`
-
-Example PowerShell session:
+Example:
 
 ```powershell
 $env:KROGER_CLIENT_ID="your-client-id"
@@ -50,59 +75,34 @@ $env:KROGER_CLIENT_SECRET="your-client-secret"
 $env:KROGER_API_SCOPE="product.compact"
 ```
 
-If you do not set these variables, the app still works and uses mock grocery pricing.
+If credentials or store lookup fail, the app falls back to mock pricing rather than crashing.
 
-## Run the app
+## Verification
+
+Fast submission-oriented checks:
 
 ```powershell
-python -m streamlit run mvp/app.py
+.\.venv\Scripts\python.exe -m unittest tests.test_phase2_app_display
+.\.venv\Scripts\python.exe -m unittest tests.test_phaseJ_acceptance
+.\.venv\Scripts\python.exe -m unittest tests.test_phase6_regressions
 ```
 
-Then open the local Streamlit URL shown in the terminal, usually `http://localhost:8501`.
-
-## Using real store pricing
-
-1. Start the app.
-2. In the `Pricing` section, switch to `Real store`.
-3. Enter a ZIP code.
-4. Choose a nearby Kroger or Fry's store if locations are available.
-5. Generate the weekly plan.
-
-When a Kroger product has no usable price or a request fails mid-run, PantryPilot uses mock pricing for the missing item instead of crashing.
-
-## Run tests
+Full suite:
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-Phase 1 and Phase 2 coverage includes:
+## Data and Runtime Notes
 
-- allergy filtering
-- shopping-list aggregation
-- budget compliance
-- provider fallback behavior
-- missing-price handling
+- The app is local-first and does not require runtime recipe scraping.
+- Current runtime/data contracts live in:
+  - [docs/runtime_data_contract.md](/C:/Users/Legom/mae301-2026spring-PantryPilot/docs/runtime_data_contract.md)
+  - [docs/nutrition_data_plan.md](/C:/Users/Legom/mae301-2026spring-PantryPilot/docs/nutrition_data_plan.md)
+  - [docs/recipe_planner_fix_plan.md](/C:/Users/Legom/mae301-2026spring-PantryPilot/docs/recipe_planner_fix_plan.md)
+- Large raw imports, USDA snapshot inputs, temporary logs, and local carryover/favorites state are not part of the normal tracked submission surface.
 
-## Milestone 1 dataset scaffold
+## Historical Context
 
-The repo now includes a dataset scaffold for a larger local recipe corpus without changing the current planner behavior:
-
-- `mvp/data/raw/` stores original source files
-- `mvp/data/processed/` stores normalized recipe records after validation
-- `pantry_pilot/data_pipeline/` defines the normalized schema and validation helpers
-
-The Streamlit app still uses the existing sample recipe provider in this milestone.
-
-## Kroger API references
-
-PantryPilot's Phase 2 implementation follows Kroger's public API documentation for:
-
-- OAuth2 client credentials
-- `/locations` ZIP-code lookup
-- `/products` search with `filter.locationId`
-
-Reference links:
-
-- [Kroger Public APIs (Postman)](https://www.postman.com/kroger/the-kroger-co-s-public-workspace/documentation/ki6utqb/kroger-public-apis)
-- [Kroger Developers](https://developer.kroger.com/)
+- `nanogpt/` is retained as earlier project context.
+- `docs/lit-llama-main/` is legacy reference material and is not the main PantryPilot submission path.
