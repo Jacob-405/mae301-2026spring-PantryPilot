@@ -52,6 +52,174 @@ class CalorieChoiceRecipeProvider(LocalRecipeProvider):
         )
 
 
+class UnknownCalorieRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe(
+                recipe_id="unknown-dinner",
+                title="Unknown Dinner",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=None,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("safe base", 1.0, "item"),),
+                steps=("Cook the base ingredient.",),
+            ),
+        )
+
+
+class BudgetChoiceRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe(
+                recipe_id="cheap-dinner",
+                title="Cheap Dinner",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=350,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("cheap base", 1.0, "item"),),
+                steps=("Cook the cheap base ingredient.",),
+            ),
+            Recipe(
+                recipe_id="target-dinner",
+                title="Budget Target Dinner",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=750,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("target base", 1.0, "item"),),
+                steps=("Cook the target base ingredient.",),
+            ),
+        )
+
+
+class UnknownPriceRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe(
+                recipe_id="unpriced-dinner",
+                title="Unpriced Dinner",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=700,
+                prep_time_minutes=20,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(RecipeIngredient("mystery spice", 1.0, "pinch"),),
+                steps=("Cook the unpriced ingredient.",),
+            ),
+        )
+
+
+class MealReasonablenessRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe(
+                recipe_id="garlic-aioli",
+                title="Garlic Aioli (Dipping Sauce for French Fries)",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=250,
+                prep_time_minutes=10,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(
+                    RecipeIngredient("garlic", 2.0, "clove"),
+                    RecipeIngredient("mayonnaise", 0.5, "cup"),
+                    RecipeIngredient("lemon", 1.0, "item"),
+                    RecipeIngredient("paprika", 1.0, "tsp"),
+                ),
+                steps=("Whisk the ingredients together.",),
+            ),
+            Recipe(
+                recipe_id="onion-relish",
+                title="Indian Onion Relish",
+                cuisine="indian",
+                base_servings=2,
+                estimated_calories_per_serving=180,
+                prep_time_minutes=10,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free", "vegan"}),
+                allergens=frozenset(),
+                ingredients=(
+                    RecipeIngredient("onion", 1.0, "item"),
+                    RecipeIngredient("lime", 1.0, "item"),
+                    RecipeIngredient("cilantro", 1.0, "tbsp"),
+                    RecipeIngredient("salt", 1.0, "tsp"),
+                ),
+                steps=("Mix and chill.",),
+            ),
+            Recipe(
+                recipe_id="guacamole",
+                title="Authentic Mexican Guacamole",
+                cuisine="mexican",
+                base_servings=2,
+                estimated_calories_per_serving=220,
+                prep_time_minutes=10,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free", "vegan"}),
+                allergens=frozenset(),
+                ingredients=(
+                    RecipeIngredient("avocado", 2.0, "item"),
+                    RecipeIngredient("tomato", 1.0, "item"),
+                    RecipeIngredient("onion", 0.5, "item"),
+                    RecipeIngredient("lime", 1.0, "item"),
+                ),
+                steps=("Mash and mix.",),
+            ),
+            Recipe(
+                recipe_id="chicken-skillet",
+                title="Lemon Chicken Skillet",
+                cuisine="american",
+                base_servings=2,
+                estimated_calories_per_serving=650,
+                prep_time_minutes=25,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free"}),
+                allergens=frozenset(),
+                ingredients=(
+                    RecipeIngredient("chicken breast", 1.0, "lb"),
+                    RecipeIngredient("rice", 1.0, "cup"),
+                    RecipeIngredient("broccoli", 2.0, "cup"),
+                    RecipeIngredient("lemon", 1.0, "item"),
+                    RecipeIngredient("garlic", 2.0, "clove"),
+                ),
+                steps=("Cook the chicken and vegetables in a skillet.",),
+            ),
+            Recipe(
+                recipe_id="bean-chili",
+                title="Black Bean Chili Bowl",
+                cuisine="mexican",
+                base_servings=2,
+                estimated_calories_per_serving=640,
+                prep_time_minutes=25,
+                meal_types=("dinner",),
+                diet_tags=frozenset({"gluten-free", "vegan"}),
+                allergens=frozenset(),
+                ingredients=(
+                    RecipeIngredient("black beans", 1.0, "can"),
+                    RecipeIngredient("rice", 1.0, "cup"),
+                    RecipeIngredient("tomato", 2.0, "item"),
+                    RecipeIngredient("onion", 1.0, "item"),
+                    RecipeIngredient("cumin", 1.0, "tsp"),
+                ),
+                steps=("Simmer the chili and serve in bowls.",),
+            ),
+        )
+
+
 class VarietyRecipeProvider(LocalRecipeProvider):
     def list_recipes(self) -> tuple[Recipe, ...]:
         return (
@@ -311,7 +479,55 @@ class NearDuplicateRecipeProvider(LocalRecipeProvider):
         )
 
 
+class ExpandedVarietyRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe("dinner-1", "Herby Rice Bowl", "mediterranean", 2, 540, 20, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("base ingredient 1", 1.0, "item"),), ("Cook dinner 1.",)),
+            Recipe("dinner-2", "Tomato Chickpea Skillet", "mediterranean", 2, 550, 20, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("base ingredient 2", 1.0, "item"),), ("Cook dinner 2.",)),
+            Recipe("dinner-3", "Lemon Lentil Plate", "indian", 2, 560, 20, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("base ingredient 3", 1.0, "item"),), ("Cook dinner 3.",)),
+            Recipe("dinner-4", "Roasted Corn Bowl", "mexican", 2, 545, 20, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("base ingredient 4", 1.0, "item"),), ("Cook dinner 4.",)),
+            Recipe("dinner-5", "Cumin Bean Dinner", "mexican", 2, 535, 20, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("base ingredient 5", 1.0, "item"),), ("Cook dinner 5.",)),
+            Recipe("dinner-6", "Ginger Veggie Plate", "asian", 2, 555, 20, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("base ingredient 6", 1.0, "item"),), ("Cook dinner 6.",)),
+            Recipe("dinner-7", "Paprika Potato Bowl", "american", 2, 548, 20, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("base ingredient 7", 1.0, "item"),), ("Cook dinner 7.",)),
+            Recipe("dinner-8", "Coconut Curry Bowl", "thai", 2, 552, 20, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("base ingredient 8", 1.0, "item"),), ("Cook dinner 8.",)),
+        )
+
+
+class DessertAndDrinkRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe("candy", "Mash Potato Candy", "american", 2, 500, 20, ("dinner",), frozenset({"gluten-free"}), frozenset(), (RecipeIngredient("potato", 1.0, "item"),), ("Cook.",)),
+            Recipe("limeade", "Thai Limeade", "thai", 2, 450, 15, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("lime", 2.0, "item"),), ("Mix.",)),
+            Recipe("jam", "Tomato Jam", "american", 2, 420, 20, ("dinner",), frozenset({"vegan", "gluten-free"}), frozenset(), (RecipeIngredient("tomato", 2.0, "item"),), ("Cook.",)),
+            Recipe("fry-bread", "Indian Fry Bread", "indian", 2, 600, 25, ("dinner",), frozenset(), frozenset({"gluten"}), (RecipeIngredient("flour", 2.0, "cup"),), ("Fry.",)),
+            Recipe("taco-bread", "Fry Bread For Indian Tacos", "indian", 2, 650, 25, ("dinner",), frozenset(), frozenset({"gluten"}), (RecipeIngredient("flour", 2.0, "cup"), RecipeIngredient("ground beef", 1.0, "lb")), ("Cook.",)),
+            Recipe("meal", "Chicken Rice Bowl", "american", 2, 700, 25, ("dinner",), frozenset({"gluten-free"}), frozenset(), (RecipeIngredient("chicken breast", 1.0, "lb"), RecipeIngredient("rice", 1.0, "cup")), ("Cook.",)),
+        )
+
+
+class PancakeCostRecipeProvider(LocalRecipeProvider):
+    def list_recipes(self) -> tuple[Recipe, ...]:
+        return (
+            Recipe(
+                "pancakes",
+                "Weeknight Pancakes",
+                "american",
+                2,
+                350,
+                15,
+                ("breakfast",),
+                frozenset({"vegetarian"}),
+                frozenset({"dairy", "egg", "gluten"}),
+                (RecipeIngredient("pancake mix", 0.5, "cup"),),
+                ("Cook the pancakes.",),
+            ),
+        )
+
+
 class PlanningPhase6Tests(unittest.TestCase):
+    def setUp(self) -> None:
+        WeeklyMealPlanner.reset_request_cycle_offsets()
+
     def test_daily_calorie_target_changes_recipe_selection(self) -> None:
         planner = WeeklyMealPlanner(
             recipe_provider=CalorieChoiceRecipeProvider(),
@@ -351,6 +567,186 @@ class PlanningPhase6Tests(unittest.TestCase):
 
         self.assertEqual(lower_target_plan.meals[0].recipe.title, "Light Dinner")
         self.assertEqual(higher_target_plan.meals[0].recipe.title, "Target Dinner")
+
+    def test_weekly_budget_changes_recipe_selection_when_costs_differ(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=BudgetChoiceRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "cheap base": GroceryProduct("cheap base", 1.0, "item", 1.0),
+                    "target base": GroceryProduct("target base", 1.0, "item", 4.0),
+                }
+            ),
+        )
+        low_budget_request = PlannerRequest(
+            weekly_budget=10.0,
+            servings=2,
+            cuisine_preferences=("american",),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            daily_calorie_target_min=1450,
+            daily_calorie_target_max=1650,
+        )
+        high_budget_request = PlannerRequest(
+            weekly_budget=30.0,
+            servings=2,
+            cuisine_preferences=("american",),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            daily_calorie_target_min=1450,
+            daily_calorie_target_max=1650,
+        )
+
+        low_budget_plan = planner.create_plan(low_budget_request)
+        high_budget_plan = planner.create_plan(high_budget_request)
+
+        self.assertEqual(low_budget_plan.meals[0].recipe.title, "Cheap Dinner")
+        self.assertEqual(high_budget_plan.meals[0].recipe.title, "Budget Target Dinner")
+
+    def test_unknown_calorie_data_fails_with_clear_message(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=UnknownCalorieRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {"safe base": GroceryProduct("safe base", 1.0, "item", 2.0)}
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=30.0,
+            servings=2,
+            cuisine_preferences=("american",),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            daily_calorie_target_min=1450,
+            daily_calorie_target_max=1650,
+        )
+
+        with self.assertRaisesRegex(PlannerError, "known calorie estimates.*calorie target cannot be satisfied"):
+            planner.create_plan(request)
+
+    def test_unknown_price_data_fails_with_clear_message(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=UnknownPriceRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider({}),
+        )
+        request = PlannerRequest(
+            weekly_budget=30.0,
+            servings=2,
+            cuisine_preferences=("american",),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            daily_calorie_target_min=1200,
+            daily_calorie_target_max=1600,
+        )
+
+        with self.assertRaisesRegex(PlannerError, "fully priced recipes.*weekly budget cannot be verified"):
+            planner.create_plan(request)
+
+    def test_non_meal_titles_are_filtered_out_of_dinner_candidates(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=MealReasonablenessRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "avocado": GroceryProduct("avocado", 1.0, "item", 1.0),
+                    "black beans": GroceryProduct("black beans", 1.0, "can", 1.0),
+                    "broccoli": GroceryProduct("broccoli", 1.0, "cup", 1.0),
+                    "chicken breast": GroceryProduct("chicken breast", 1.0, "lb", 4.0),
+                    "cilantro": GroceryProduct("cilantro", 1.0, "tbsp", 1.0),
+                    "cumin": GroceryProduct("cumin", 1.0, "tsp", 1.0),
+                    "garlic": GroceryProduct("garlic", 1.0, "clove", 1.0),
+                    "lemon": GroceryProduct("lemon", 1.0, "item", 1.0),
+                    "lime": GroceryProduct("lime", 1.0, "item", 1.0),
+                    "mayonnaise": GroceryProduct("mayonnaise", 1.0, "cup", 2.0),
+                    "onion": GroceryProduct("onion", 1.0, "item", 1.0),
+                    "paprika": GroceryProduct("paprika", 1.0, "tsp", 1.0),
+                    "rice": GroceryProduct("rice", 1.0, "cup", 1.0),
+                    "salt": GroceryProduct("salt", 1.0, "tsp", 1.0),
+                    "tomato": GroceryProduct("tomato", 1.0, "item", 1.0),
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=40.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            meal_structure=("dinner",),
+            daily_calorie_target_min=1200,
+            daily_calorie_target_max=1600,
+        )
+
+        dinner_candidates = planner._recipes_for_slot(planner.filter_recipes(request), request, 1)
+
+        self.assertEqual(
+            [recipe.title for recipe in dinner_candidates],
+            ["Black Bean Chili Bowl", "Lemon Chicken Skillet"],
+        )
+
+    def test_dinner_filter_keeps_multiple_valid_meal_candidates(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=MealReasonablenessRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "avocado": GroceryProduct("avocado", 1.0, "item", 1.0),
+                    "black beans": GroceryProduct("black beans", 1.0, "can", 1.0),
+                    "broccoli": GroceryProduct("broccoli", 1.0, "cup", 1.0),
+                    "chicken breast": GroceryProduct("chicken breast", 1.0, "lb", 4.0),
+                    "cilantro": GroceryProduct("cilantro", 1.0, "tbsp", 1.0),
+                    "cumin": GroceryProduct("cumin", 1.0, "tsp", 1.0),
+                    "garlic": GroceryProduct("garlic", 1.0, "clove", 1.0),
+                    "lemon": GroceryProduct("lemon", 1.0, "item", 1.0),
+                    "lime": GroceryProduct("lime", 1.0, "item", 1.0),
+                    "mayonnaise": GroceryProduct("mayonnaise", 1.0, "cup", 2.0),
+                    "onion": GroceryProduct("onion", 1.0, "item", 1.0),
+                    "paprika": GroceryProduct("paprika", 1.0, "tsp", 1.0),
+                    "rice": GroceryProduct("rice", 1.0, "cup", 1.0),
+                    "salt": GroceryProduct("salt", 1.0, "tsp", 1.0),
+                    "tomato": GroceryProduct("tomato", 1.0, "item", 1.0),
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=40.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=("gluten-free",),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            meal_structure=("dinner",),
+            daily_calorie_target_min=1200,
+            daily_calorie_target_max=1600,
+        )
+
+        dinner_candidates = planner._recipes_for_slot(planner.filter_recipes(request), request, 1)
+
+        self.assertEqual(len(dinner_candidates), 2)
+        self.assertEqual(
+            {recipe.title for recipe in dinner_candidates},
+            {"Lemon Chicken Skillet", "Black Bean Chili Bowl"},
+        )
 
     def test_high_variety_avoids_cheap_repeats_more_than_low_variety(self) -> None:
         provider = FixedPriceGroceryProvider(
@@ -395,20 +791,20 @@ class PlanningPhase6Tests(unittest.TestCase):
         self.assertNotEqual(high_titles[1], "Cheap Rice Bowl")
         self.assertGreater(low_counts["Cheap Rice Bowl"], high_counts["Cheap Rice Bowl"])
 
-    def test_planner_stays_deterministic_for_same_variety_setting(self) -> None:
+    def test_leftovers_off_avoids_duplicate_meals_when_unique_options_exist(self) -> None:
         planner = WeeklyMealPlanner(
-            recipe_provider=VarietyRecipeProvider(),
+            recipe_provider=ExpandedVarietyRecipeProvider(),
             grocery_provider=FixedPriceGroceryProvider(
                 {
-                    "cheap staple": GroceryProduct("cheap staple", 1.0, "item", 1.0),
-                    "expensive vegetable": GroceryProduct("expensive vegetable", 1.0, "item", 7.0),
-                    "expensive legume": GroceryProduct("expensive legume", 1.0, "item", 7.0),
-                    "expensive grain": GroceryProduct("expensive grain", 1.0, "item", 7.0),
+                    **{
+                        f"base ingredient {index}": GroceryProduct(f"base ingredient {index}", 1.0, "item", 3.0)
+                        for index in range(1, 9)
+                    },
                 }
             ),
         )
         request = PlannerRequest(
-            weekly_budget=60.0,
+            weekly_budget=80.0,
             servings=2,
             cuisine_preferences=(),
             allergies=(),
@@ -417,20 +813,170 @@ class PlanningPhase6Tests(unittest.TestCase):
             pantry_staples=(),
             max_prep_time_minutes=30,
             meals_per_day=1,
+            meal_structure=("dinner",),
             daily_calorie_target_min=900,
             daily_calorie_target_max=1300,
-            variety_preference="high",
+            variety_preference="balanced",
+            leftovers_mode="off",
+        )
+
+        plan = planner.create_plan(request)
+        titles = [meal.recipe.title for meal in plan.meals]
+
+        self.assertEqual(len(titles), 7)
+        self.assertEqual(len(titles), len(set(titles)))
+
+    def test_repeated_identical_requests_rotate_among_near_equal_weekly_plans(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=ExpandedVarietyRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    **{
+                        f"base ingredient {index}": GroceryProduct(f"base ingredient {index}", 1.0, "item", 3.0)
+                        for index in range(1, 9)
+                    },
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=80.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=(),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            meal_structure=("dinner",),
+            daily_calorie_target_min=900,
+            daily_calorie_target_max=1300,
+            variety_preference="balanced",
+            leftovers_mode="off",
         )
 
         first_plan = planner.create_plan(request)
         second_plan = planner.create_plan(request)
 
-        self.assertEqual(
+        self.assertNotEqual(
             [meal.recipe.recipe_id for meal in first_plan.meals],
             [meal.recipe.recipe_id for meal in second_plan.meals],
         )
-        self.assertEqual(first_plan.shopping_list, second_plan.shopping_list)
-        self.assertEqual(first_plan.estimated_total_cost, second_plan.estimated_total_cost)
+        self.assertLessEqual(first_plan.estimated_total_cost, request.weekly_budget)
+        self.assertLessEqual(second_plan.estimated_total_cost, request.weekly_budget)
+
+    def test_real_dataset_budget_and_calorie_constrained_plan_still_succeeds_with_variety_controls(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=LocalRecipeProvider(),
+        )
+        request = PlannerRequest(
+            weekly_budget=140.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=(),
+            pantry_staples=(),
+            max_prep_time_minutes=35,
+            meals_per_day=1,
+            meal_structure=("dinner",),
+            pricing_mode="mock",
+            daily_calorie_target_min=800,
+            daily_calorie_target_max=1200,
+            variety_preference="balanced",
+            leftovers_mode="off",
+        )
+
+        plan = planner.create_plan(request)
+
+        self.assertEqual(sum(meal.meal_role == "main" for meal in plan.meals), 7)
+        self.assertLessEqual(plan.estimated_total_cost, request.weekly_budget)
+        self.assertTrue(all(meal.recipe.estimated_calories_per_serving is not None for meal in plan.meals))
+        self.assertTrue(all(item.estimated_cost is not None for item in plan.shopping_list))
+
+    def test_dessert_and_drink_titles_are_filtered_out_of_dinner_candidates(self) -> None:
+        planner = WeeklyMealPlanner(recipe_provider=DessertAndDrinkRecipeProvider())
+        request = PlannerRequest(
+            weekly_budget=120.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=(),
+            pantry_staples=(),
+            max_prep_time_minutes=35,
+            meals_per_day=1,
+            meal_structure=("dinner",),
+            daily_calorie_target_min=800,
+            daily_calorie_target_max=1200,
+        )
+
+        dinner_candidates = planner._recipes_for_slot(planner.filter_recipes(request), request, 1)
+        dinner_titles = {recipe.title for recipe in dinner_candidates}
+
+        self.assertNotIn("Mash Potato Candy", dinner_titles)
+        self.assertNotIn("Thai Limeade", dinner_titles)
+        self.assertNotIn("Tomato Jam", dinner_titles)
+        self.assertNotIn("Indian Fry Bread", dinner_titles)
+        self.assertIn("Fry Bread For Indian Tacos", dinner_titles)
+        self.assertIn("Chicken Rice Bowl", dinner_titles)
+
+    def test_meal_consumed_cost_is_distinct_from_added_shopping_cost(self) -> None:
+        planner = WeeklyMealPlanner(
+            recipe_provider=PancakeCostRecipeProvider(),
+            grocery_provider=FixedPriceGroceryProvider(
+                {
+                    "pancake mix": GroceryProduct("pancake mix", 2.0, "cup", 8.0),
+                }
+            ),
+        )
+        request = PlannerRequest(
+            weekly_budget=80.0,
+            servings=2,
+            cuisine_preferences=(),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=(),
+            pantry_staples=(),
+            max_prep_time_minutes=30,
+            meals_per_day=1,
+            meal_structure=("breakfast",),
+            daily_calorie_target_min=600,
+            daily_calorie_target_max=900,
+        )
+
+        plan = planner.create_plan(request)
+        meal = plan.meals[0]
+
+        self.assertEqual(meal.incremental_cost, 8.0)
+        self.assertEqual(meal.consumed_cost, 2.0)
+
+    def test_repeat_warning_is_not_triggered_when_unique_under_budget_options_exist(self) -> None:
+        planner = WeeklyMealPlanner(recipe_provider=LocalRecipeProvider())
+        request = PlannerRequest(
+            weekly_budget=300.0,
+            servings=2,
+            cuisine_preferences=("mediterranean", "mexican", "american"),
+            allergies=(),
+            excluded_ingredients=(),
+            diet_restrictions=(),
+            pantry_staples=("olive oil", "cinnamon"),
+            max_prep_time_minutes=35,
+            meals_per_day=2,
+            meal_structure=("lunch", "dinner"),
+            pricing_mode="mock",
+            daily_calorie_target_min=1600,
+            daily_calorie_target_max=2200,
+            variety_preference="balanced",
+            leftovers_mode="off",
+        )
+
+        diagnostics = planner.diagnose_request_support(request)
+        plan = planner.create_plan(request)
+
+        self.assertEqual(diagnostics.forced_repeat_slots, 0)
+        self.assertTrue(diagnostics.repeat_message_truthful)
+        self.assertFalse(any("repeat more than the weekly cap" in note for note in plan.notes))
 
     def test_near_duplicate_penalty_prefers_distinct_second_meal(self) -> None:
         planner = WeeklyMealPlanner(

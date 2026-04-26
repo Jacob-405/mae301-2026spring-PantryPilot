@@ -1,0 +1,173 @@
+{
+  "mappings": [
+    {
+      "canonical_ingredient": "bacon",
+      "nutrition_key": "usda-fdc-pilot:bacon-cooked-slice",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "baking powder",
+      "nutrition_key": "usda-fdc-pilot:baking-powder-tsp",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "baking soda",
+      "nutrition_key": "usda-fdc-pilot:baking-soda-tsp",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "broccoli",
+      "nutrition_key": "usda-fdc-pilot:broccoli-raw-cup",
+      "mapping_method": "reviewed-pilot",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "cayenne pepper",
+      "nutrition_key": "usda-fdc-pilot:cayenne-pepper-tbsp",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "cheddar cheese",
+      "nutrition_key": "usda-fdc-pilot:cheddar-cheese-shredded-cup",
+      "mapping_method": "reviewed-pilot",
+      "confidence": "medium",
+      "review_status": "reviewed",
+      "notes": "Uses the plain Foundation cheddar food with the shredded cup portion."
+    },
+    {
+      "canonical_ingredient": "cherries",
+      "nutrition_key": "usda-fdc-pilot:cherries-sweet-raw-cup",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "medium",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "cilantro",
+      "nutrition_key": "usda-fdc-pilot:cilantro-raw-cup",
+      "mapping_method": "reviewed-pilot",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "cocoa",
+      "nutrition_key": "usda-fdc-pilot:cocoa-unsweetened-tbsp",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "coconut",
+      "nutrition_key": "usda-fdc-pilot:coconut-raw-cup",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "medium",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "cream cheese",
+      "nutrition_key": "usda-fdc-pilot:cream-cheese-plain-cup",
+      "mapping_method": "reviewed-pilot",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "cream of chicken soup",
+      "nutrition_key": "usda-fdc-pilot:cream-of-chicken-soup-condensed-cup",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "cream of mushroom soup",
+      "nutrition_key": "usda-fdc-pilot:cream-of-mushroom-soup-condensed-cup",
+      "mapping_method": "reviewed-pilot",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "evaporated milk",
+      "nutrition_key": "usda-fdc-pilot:evaporated-milk-cup",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "granola",
+      "nutrition_key": "usda-fdc-pilot:granola-homemade-cup",
+      "mapping_method": "reviewed-pilot",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "green onion",
+      "nutrition_key": "usda-fdc-pilot:green-onion-raw-cup",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "heavy cream",
+      "nutrition_key": "usda-fdc-pilot:heavy-cream-tbsp",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "mustard",
+      "nutrition_key": "usda-fdc-pilot:prepared-mustard-tbsp",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "nutmeg",
+      "nutrition_key": "usda-fdc-pilot:nutmeg-ground-tsp",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "olive oil",
+      "nutrition_key": "usda-fdc-pilot:olive-oil-tbsp",
+      "mapping_method": "reviewed-pilot",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "pecans",
+      "nutrition_key": "usda-fdc-pilot:pecans-halves-tbsp",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "medium",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "sour cream",
+      "nutrition_key": "usda-fdc-pilot:sour-cream-regular-cup",
+      "mapping_method": "reviewed-pilot",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "soy sauce",
+      "nutrition_key": "usda-fdc-pilot:soy-sauce-tamari-tbsp",
+      "mapping_method": "reviewed-pilot",
+      "confidence": "high",
+      "review_status": "reviewed"
+    },
+    {
+      "canonical_ingredient": "thyme",
+      "nutrition_key": "usda-fdc-pilot:thyme-dried-tsp",
+      "mapping_method": "reviewed-phase-e-batch",
+      "confidence": "high",
+      "review_status": "reviewed"
+    }
+  ]
+}

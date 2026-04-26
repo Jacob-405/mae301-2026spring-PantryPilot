@@ -120,6 +120,31 @@ class PricingPhase5Tests(unittest.TestCase):
         with self.assertRaises(PlannerError):
             planner.create_plan(request)
 
+    def test_unknown_conversion_cost_does_not_show_as_zero(self) -> None:
+        planner = WeeklyMealPlanner(grocery_provider=MockGroceryProvider())
+
+        shopping_list, total_cost = planner._build_shopping_list(
+            {"apple": AggregatedIngredient(quantity=1.0, unit="lb")}
+        )
+        apple = shopping_list[0]
+
+        self.assertIsNone(apple.estimated_cost)
+        self.assertEqual(total_cost, 0.0)
+
+    def test_common_item_to_cup_gap_now_uses_estimated_purchase_cost(self) -> None:
+        planner = WeeklyMealPlanner(grocery_provider=MockGroceryProvider())
+
+        shopping_list, total_cost = planner._build_shopping_list(
+            {"apple": AggregatedIngredient(quantity=2.5, unit="cup")}
+        )
+        apple = shopping_list[0]
+
+        self.assertEqual(apple.estimated_packages, 2)
+        self.assertEqual(apple.package_quantity, 1.0)
+        self.assertEqual(apple.package_unit, "item")
+        self.assertEqual(apple.estimated_cost, 1.5)
+        self.assertEqual(total_cost, 1.5)
+
 
 if __name__ == "__main__":
     unittest.main()

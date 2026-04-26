@@ -1,0 +1,26 @@
+{
+  "source_system": "usda-fdc",
+  "pilot_scope": "phase-e-usda-nutrition-expansion",
+  "snapshot_priority": [
+    "foundation",
+    "sr_legacy",
+    "fndds"
+  ],
+  "source_releases": {
+    "foundation": "2025-12-18",
+    "sr_legacy": "2018-04",
+    "fndds": "2024-10-31"
+  },
+  "source_urls": {
+    "foundation": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2025-12-18.zip",
+    "sr_legacy": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json_2018-04.zip",
+    "fndds": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_survey_food_json_2024-10-31.zip"
+  },
+  "ingredient_count": 24,
+  "notes": [
+    "This reviewed cache stays checked into the repo as a local runtime nutrition source.",
+    "Planner-time nutrition lookups must remain local and offline.",
+    "No broad USDA ingestion job is required for this phase.",
+    "Phase E expands the reviewed subset in explicit batches rather than running a broad mapper."
+  ]
+}

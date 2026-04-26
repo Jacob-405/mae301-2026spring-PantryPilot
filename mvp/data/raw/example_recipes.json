@@ -1,0 +1,26 @@
+{
+  "recipes": [
+    {
+      "source_recipe_id": "example-001",
+      "title": "Tomato Rice Bowl",
+      "cuisine": "mediterranean",
+      "meal_types": "lunch,dinner",
+      "diet_tags": "vegetarian",
+      "servings": 4,
+      "prep_time_minutes": 10,
+      "cook_time_minutes": 20,
+      "total_time_minutes": 30,
+      "calories_per_serving": 410,
+      "allergen_completeness": "complete",
+      "allergens": [],
+      "ingredients": [
+        {"name": "tomatoes", "quantity": 2, "unit": "items"},
+        {"name": "rice", "quantity": 2, "unit": "cups"}
+      ],
+      "instructions": [
+        "Cook rice.",
+        "Top with chopped tomato."
+      ]
+    }
+  ]
+}

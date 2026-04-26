@@ -1,13 +1,59 @@
-# virtual env
+# Python environments and caches
 .venv/
-
-# python cache
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
 
-# large data
-nanogpt/data/raw/recipenlg/full_dataset.csv
-nanogpt/data/processed/
+# Local tooling and machine-specific folders
+.codex/
+hf_cache/
+.DS_Store
+Thumbs.db
 
-# model outputs
-nanogpt/outputs/
+# Runtime state written by the app
+data/saved_plans.json
+data/pantry_carryover.json
+
+# MVP raw data snapshots and imported source dumps
+mvp/data/raw/kaggle-recipes/
+mvp/data/raw/recipenlg/
+
+# MVP processed build artifacts and logs
+mvp/data/processed/*.checkpoint.json
+mvp/data/processed/*.lock.json
+mvp/data/processed/*.stdout.log
+mvp/data/processed/*.stderr.log
+mvp/data/processed/recipes.imported.json
+mvp/data/processed/recipes.imported.stats.json
+mvp/data/processed/kaggle-recipes.imported.json
+mvp/data/processed/kaggle-recipes.imported.stats.json
+mvp/data/processed/recipenlg.imported.checkpoint.json
+mvp/data/processed/recipenlg.imported.json
+mvp/data/processed/recipenlg.imported.stats.json
+mvp/data/processed/recipenlg-sample-*.json
+mvp/data/processed/recipenlg-sample-*.stats.json
+mvp/data/processed/recipenlg-sample-*.checkpoint.json
+mvp/data/processed/recipenlg-midscale-*.json
+mvp/data/processed/recipenlg-midscale-*.stats.json
+mvp/data/processed/recipenlg-midscale-*.checkpoint.json
+mvp/data/processed/recipenlg-midscale-*.lock.json
+
+# USDA raw snapshot inputs and local build caches
+pantry_pilot/data/nutrition_raw/
+pantry_pilot/data/nutrition_build/*.jsonl
+pantry_pilot/data/nutrition_build/*.checkpoint.json
+
+# Temporary artifacts and review scratch files
+*.tmp
+*.bak
+*.orig
+*.rej
+*.diff
+hf_cache/
+pantry_pilot/data/nutrition_raw/
+pantry_pilot/data/nutrition_build/
+mvp/data/processed/recipenlg-full-20260416T0625Z.json
+mvp/data/processed/recipenlg-full-20260416T0625Z.stats.json
+data/pantry_carryover.json

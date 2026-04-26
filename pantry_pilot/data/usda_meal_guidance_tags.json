@@ -1,0 +1,183 @@
+{
+  "source_system": "myplate-guidance",
+  "guidance_scope": "phase-e-balanced-meal-guidance",
+  "mappings": [
+    {
+      "canonical_ingredient": "bacon",
+      "food_group_tags": ["protein_foods"],
+      "component_tags": ["protein"],
+      "notes": "Use as soft protein support only, not as a health-positive anchor by itself."
+    },
+    {
+      "canonical_ingredient": "black beans",
+      "food_group_tags": ["protein_foods", "vegetables_legumes"],
+      "component_tags": ["protein", "carb", "vegetable"]
+    },
+    {
+      "canonical_ingredient": "bread",
+      "food_group_tags": ["grains"],
+      "component_tags": ["carb"]
+    },
+    {
+      "canonical_ingredient": "bread crumbs",
+      "food_group_tags": ["grains"],
+      "component_tags": ["carb"]
+    },
+    {
+      "canonical_ingredient": "broccoli",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    },
+    {
+      "canonical_ingredient": "carrot",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    },
+    {
+      "canonical_ingredient": "celery",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    },
+    {
+      "canonical_ingredient": "cheddar cheese",
+      "food_group_tags": ["dairy"],
+      "component_tags": ["protein", "dairy"]
+    },
+    {
+      "canonical_ingredient": "chicken",
+      "food_group_tags": ["protein_foods"],
+      "component_tags": ["protein"]
+    },
+    {
+      "canonical_ingredient": "chicken breast",
+      "food_group_tags": ["protein_foods"],
+      "component_tags": ["protein"]
+    },
+    {
+      "canonical_ingredient": "chickpeas",
+      "food_group_tags": ["protein_foods", "vegetables_legumes"],
+      "component_tags": ["protein", "carb", "vegetable"]
+    },
+    {
+      "canonical_ingredient": "corn",
+      "food_group_tags": ["grains_starches"],
+      "component_tags": ["carb"]
+    },
+    {
+      "canonical_ingredient": "cucumber",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    },
+    {
+      "canonical_ingredient": "eggs",
+      "food_group_tags": ["protein_foods"],
+      "component_tags": ["protein"]
+    },
+    {
+      "canonical_ingredient": "feta",
+      "food_group_tags": ["dairy"],
+      "component_tags": ["protein", "dairy"]
+    },
+    {
+      "canonical_ingredient": "flour tortillas",
+      "food_group_tags": ["grains"],
+      "component_tags": ["carb"]
+    },
+    {
+      "canonical_ingredient": "green onion",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    },
+    {
+      "canonical_ingredient": "ground beef",
+      "food_group_tags": ["protein_foods"],
+      "component_tags": ["protein"]
+    },
+    {
+      "canonical_ingredient": "ground turkey",
+      "food_group_tags": ["protein_foods"],
+      "component_tags": ["protein"]
+    },
+    {
+      "canonical_ingredient": "lentils",
+      "food_group_tags": ["protein_foods", "vegetables_legumes"],
+      "component_tags": ["protein", "carb", "vegetable"]
+    },
+    {
+      "canonical_ingredient": "milk",
+      "food_group_tags": ["dairy"],
+      "component_tags": ["dairy"]
+    },
+    {
+      "canonical_ingredient": "mozzarella cheese",
+      "food_group_tags": ["dairy"],
+      "component_tags": ["protein", "dairy"]
+    },
+    {
+      "canonical_ingredient": "mushroom",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    },
+    {
+      "canonical_ingredient": "onion",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    },
+    {
+      "canonical_ingredient": "pasta",
+      "food_group_tags": ["grains"],
+      "component_tags": ["carb"]
+    },
+    {
+      "canonical_ingredient": "parmesan",
+      "food_group_tags": ["dairy"],
+      "component_tags": ["protein", "dairy"]
+    },
+    {
+      "canonical_ingredient": "potato",
+      "food_group_tags": ["vegetables_starchy", "grains_starches"],
+      "component_tags": ["carb", "vegetable"]
+    },
+    {
+      "canonical_ingredient": "rice",
+      "food_group_tags": ["grains"],
+      "component_tags": ["carb"]
+    },
+    {
+      "canonical_ingredient": "rolled oats",
+      "food_group_tags": ["grains"],
+      "component_tags": ["carb"]
+    },
+    {
+      "canonical_ingredient": "spinach",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    },
+    {
+      "canonical_ingredient": "stuffing mix",
+      "food_group_tags": ["grains"],
+      "component_tags": ["carb"],
+      "notes": "Guidance-only in Phase E; nutrition mapping stays unresolved until a safer reviewed nutrition baseline is chosen."
+    },
+    {
+      "canonical_ingredient": "tofu",
+      "food_group_tags": ["protein_foods"],
+      "component_tags": ["protein"]
+    },
+    {
+      "canonical_ingredient": "tomato",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    },
+    {
+      "canonical_ingredient": "yogurt",
+      "food_group_tags": ["dairy"],
+      "component_tags": ["protein", "dairy"]
+    },
+    {
+      "canonical_ingredient": "zucchini",
+      "food_group_tags": ["vegetables"],
+      "component_tags": ["vegetable"]
+    }
+  ]
+}

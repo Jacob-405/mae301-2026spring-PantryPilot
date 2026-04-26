@@ -1,15 +1,49 @@
 from dataclasses import replace
-import csv
-import io
 from datetime import datetime
 
 import streamlit as st
 
+from pantry_pilot.app_runtime import build_planner_and_context, format_calorie_target
 from pantry_pilot.favorites import DEFAULT_FAVORITES_PATH, FavoritePlanStore
-from pantry_pilot.models import PlannerRequest
+from pantry_pilot.personal_targets import generate_personal_targets, summarize_targets
+from pantry_pilot.plan_failures import build_failure_feedback
+from pantry_pilot.plan_failures import build_runtime_failure_feedback, is_transient_runtime_failure
+from pantry_pilot.models import PlannerRequest, UserNutritionProfile
 from pantry_pilot.normalization import normalize_name, parse_csv_list
+from pantry_pilot.pantry_carryover import DEFAULT_PANTRY_CARRYOVER_PATH, PantryCarryoverStore
+from pantry_pilot.plan_display import (
+    build_day_plan_summaries,
+    build_plan_text_export,
+    build_grouped_shopping_sections,
+    build_shopping_list_csv,
+    calorie_status_label,
+    compact_selection_rationale,
+    confidence_note,
+    format_average_calorie_metric,
+    format_calorie_coverage_note,
+    format_calorie_total_metric,
+    format_compact_currency_total,
+    format_daily_calorie_display,
+    format_daily_nutrient_deficits,
+    format_daily_nutrient_state,
+    format_estimate_confidence_label,
+    format_meal_composition_profile,
+    format_optional_nutrition,
+    format_optional_calories_per_serving,
+    format_optional_currency,
+    format_optional_minutes,
+    meal_total_calories,
+    meal_total_nutrition,
+    meal_selection_lookup,
+    summarize_carryover_usage,
+    summarize_calories,
+    summarize_plan_balance,
+    summarize_weekly_nutrition,
+    format_personal_target_summary,
+    format_weekly_nutrition_summary,
+)
 from pantry_pilot.planner import PlannerError, WeeklyMealPlanner, day_name, slot_label
-from pantry_pilot.providers import build_pricing_context, discover_kroger_locations, format_location_label
+from pantry_pilot.providers import discover_kroger_locations, format_location_label
 
 
 st.set_page_config(page_title="PantryPilot", layout="wide")
@@ -22,7 +56,10 @@ MEAL_STRUCTURE_OPTIONS = {
     "Dinner Only": ("dinner",),
 }
 LEFTOVERS_MODE_OPTIONS = ("Off", "Moderate", "Frequent")
+PROFILE_ACTIVITY_OPTIONS = ("Sedentary", "Low Active", "Active", "Very Active")
+PROFILE_GOAL_OPTIONS = ("Maintain", "Mild Deficit", "Mild Surplus", "High Protein Preference")
 FAVORITES_STORE = FavoritePlanStore()
+PANTRY_CARRYOVER_STORE = PantryCarryoverStore()
 
 FIELD_DEFAULTS = {
     "weekly_budget_input": 90.0,
@@ -40,6 +77,13 @@ FIELD_DEFAULTS = {
     "calorie_target_max_input": 2200,
     "variety_preference_input": "Balanced",
     "leftovers_mode_input": "Off",
+    "use_personal_targets_input": False,
+    "profile_age_input": 35,
+    "profile_sex_input": "Female",
+    "profile_height_cm_input": 168.0,
+    "profile_weight_kg_input": 72.0,
+    "profile_activity_input": "Low Active",
+    "profile_goal_input": "Maintain",
 }
 
 PRESET_SCENARIOS = {
@@ -124,38 +168,13 @@ def initialize_form_state() -> None:
     st.session_state.setdefault("plan_feedback", "")
     st.session_state.setdefault("plan_error", "")
     st.session_state.setdefault("favorite_name_input", "")
+    st.session_state.setdefault("pantry_feedback", "")
 
 
 def apply_preset(preset_name: str) -> None:
     preset = PRESET_SCENARIOS[preset_name]
     for key, value in preset.items():
         st.session_state[key] = value
-
-
-def build_planner_and_context(request: PlannerRequest) -> tuple[WeeklyMealPlanner, object]:
-    pricing_context = build_pricing_context(
-        pricing_mode=request.pricing_mode,
-        zip_code=request.zip_code,
-        store_location_id=request.store_location_id,
-    )
-    planner = WeeklyMealPlanner(
-        grocery_provider=pricing_context.provider,
-        pricing_source=pricing_context.pricing_source,
-        selected_store=pricing_context.selected_store,
-    )
-    return planner, pricing_context
-
-
-def calorie_status_label(daily_calories: int, minimum: int, maximum: int) -> tuple[str, str]:
-    if daily_calories < minimum:
-        return "Below target", "Daily calories are under the selected target range."
-    if daily_calories > maximum:
-        return "Above target", "Daily calories are above the selected target range."
-    return "Within target", "Daily calories are within the selected target range."
-
-
-def format_calorie_target(minimum: int, maximum: int) -> str:
-    return f"{minimum:,} to {maximum:,} calories per day"
 
 
 def meal_structure_for_label(label: str) -> tuple[str, ...]:
@@ -176,89 +195,19 @@ def meal_repeat_label(request: PlannerRequest, plan, meal) -> tuple[str, str] | 
     return "Repeat meal", "This recipe appeared earlier in the week"
 
 
-def build_plan_text_export(request: PlannerRequest, plan) -> str:
-    lines: list[str] = [
-        "PantryPilot Weekly Plan",
-        "",
-        f"Budget: ${request.weekly_budget:.2f}",
-        f"Estimated spend: ${plan.estimated_total_cost:.2f}",
-        f"Remaining budget: ${request.weekly_budget - plan.estimated_total_cost:.2f}",
-    ]
-    weekly_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in plan.meals)
-    lines.extend(
-        [
-            f"Weekly calories: {weekly_calories:,}",
-            f"Average calories per day: {round(weekly_calories / 7):,}",
-            f"Calorie target: {format_calorie_target(request.daily_calorie_target_min, request.daily_calorie_target_max)}",
-            f"Meal structure: {' + '.join(value.title() for value in request.meal_structure or ('meal',))}",
-            f"Variety preference: {request.variety_preference.title()}",
-            f"Leftovers mode: {request.leftovers_mode.title()}",
-            "",
-            "Weekly Plan",
-            "",
-        ]
+def current_profile_targets(meals_per_day: int):
+    if not st.session_state.get("use_personal_targets_input"):
+        return None, None
+    profile = UserNutritionProfile(
+        age_years=int(st.session_state["profile_age_input"]),
+        sex=st.session_state["profile_sex_input"],
+        height_cm=float(st.session_state["profile_height_cm_input"]),
+        weight_kg=float(st.session_state["profile_weight_kg_input"]),
+        activity_level=st.session_state["profile_activity_input"],
+        planning_goal=st.session_state["profile_goal_input"],
     )
-
-    for day in range(1, 8):
-        day_meals = [meal for meal in plan.meals if meal.day == day]
-        daily_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in day_meals)
-        day_status, _ = calorie_status_label(
-            daily_calories,
-            request.daily_calorie_target_min,
-            request.daily_calorie_target_max,
-        )
-        lines.append(f"{day_name(day)}")
-        lines.append(f"  Daily calories: {daily_calories:,} ({day_status})")
-        for meal in day_meals:
-            repeat_badge = meal_repeat_label(request, plan, meal)
-            repeat_suffix = ""
-            if repeat_badge is not None:
-                repeat_suffix = f" [{repeat_badge[0]}: {repeat_badge[1]}]"
-            lines.append(
-                "  "
-                + f"{slot_label(request.meals_per_day, meal.slot, request.meal_structure)}: "
-                + f"{meal.recipe.title} | {meal.recipe.prep_time_minutes} min | "
-                + f"${meal.incremental_cost:.2f} | "
-                + f"{meal.recipe.estimated_calories_per_serving * meal.scaled_servings:,} calories"
-                + repeat_suffix
-            )
-        lines.append("")
-
-    lines.extend(["Shopping List", ""])
-    for item in plan.shopping_list:
-        lines.append(
-            f"- {item.name}: need {item.quantity} {item.unit}, "
-            f"buy {item.purchased_quantity} {item.package_unit or item.unit}, "
-            f"packages {item.estimated_packages}, "
-            f"estimated cost {'N/A' if item.estimated_cost is None else f'${item.estimated_cost:.2f}'}"
-        )
-
-    if plan.notes:
-        lines.extend(["", "Planner Notes"])
-        for note in plan.notes:
-            lines.append(f"- {note}")
-
-    return "\n".join(lines)
-
-
-def build_shopping_list_csv(plan) -> str:
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(
-        ["Ingredient", "Amount Needed", "Amount Being Bought", "Package Count", "Estimated Cost", "Price Source"]
-    )
-    for item in plan.shopping_list:
-        writer.writerow(
-            [
-                item.name,
-                f"{item.quantity} {item.unit}",
-                "N/A" if item.purchased_quantity == 0 else f"{item.purchased_quantity} {item.package_unit}",
-                item.estimated_packages,
-                "" if item.estimated_cost is None else f"{item.estimated_cost:.2f}",
-                item.pricing_source,
-            ]
-        )
-    return output.getvalue()
+    targets = generate_personal_targets(profile, meals_per_day=meals_per_day)
+    return profile, targets
 
 
 def render_saved_plans() -> None:
@@ -275,11 +224,15 @@ def render_saved_plans() -> None:
         entry = st.container(border=True)
         with entry:
             st.markdown(f"**{record.name}**")
+            calorie_summary = summarize_calories(record.plan.meals)
             st.caption(
                 f"Saved {record.saved_at} | "
                 f"${record.plan.estimated_total_cost:.2f} | "
-                f"{round(sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in record.plan.meals) / 7):,} avg calories/day"
+                f"{format_average_calorie_metric(calorie_summary)} avg calories/day"
             )
+            coverage_note = format_calorie_coverage_note(calorie_summary)
+            if coverage_note:
+                st.caption(coverage_note)
             if st.button("Open Saved Plan", key=f"open-saved-{record.plan_id}", use_container_width=True):
                 st.session_state["current_request"] = record.request
                 st.session_state["current_plan"] = record.plan
@@ -422,183 +375,302 @@ def diagnose_plan_failure(planner: WeeklyMealPlanner, request: PlannerRequest) -
     )
 
 
-def render_meal_plan(request: PlannerRequest, plan, planner: WeeklyMealPlanner, pricing_context) -> None:
+def render_meal_plan(
+    request: PlannerRequest,
+    plan,
+    planner: WeeklyMealPlanner,
+    pricing_context,
+    pantry_inventory,
+) -> None:
     pricing_header = "Mock pricing" if plan.pricing_source == "mock" else "Kroger or Fry's pricing"
     remaining_budget = request.weekly_budget - plan.estimated_total_cost
-    weekly_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in plan.meals)
-    average_daily_calories = round(weekly_calories / 7)
+    weekly_calorie_summary = summarize_calories(plan.meals)
+    weekly_nutrition_summary = summarize_weekly_nutrition(plan.meals)
+    selection_diagnostics = planner.latest_selection_diagnostics()
+    diagnostic_lookup = meal_selection_lookup(selection_diagnostics)
     calorie_target_text = format_calorie_target(
         request.daily_calorie_target_min,
         request.daily_calorie_target_max,
     )
+    personal_target_summary = format_personal_target_summary(request)
+    day_summaries = build_day_plan_summaries(request, plan)
+    shopping_sections = build_grouped_shopping_sections(plan)
 
     st.divider()
-    st.subheader("Planner Notes")
     if st.session_state.get("plan_feedback"):
         st.success(st.session_state["plan_feedback"])
     if st.session_state.get("plan_error"):
         st.error(st.session_state["plan_error"])
-    if pricing_context.note or plan.notes:
-        notes_container = st.container(border=True)
-        with notes_container:
-            if pricing_context.note:
-                st.warning(pricing_context.note)
-            for note in plan.notes:
-                st.info(note)
-    else:
-        st.caption("No planner notes for this run.")
+    if st.session_state.get("pantry_feedback"):
+        st.info(st.session_state["pantry_feedback"])
+    st.subheader("Weekly Summary")
+    summary_cards = st.columns(5)
+    with summary_cards[0].container(border=True):
+        st.caption("Weekly Shopping Total")
+        st.metric("Estimated Spend", f"${plan.estimated_total_cost:.2f}", f"${remaining_budget:.2f} remaining")
+    with summary_cards[1].container(border=True):
+        st.caption("Weekly Nutrition Summary")
+        st.write(format_weekly_nutrition_summary(weekly_nutrition_summary))
+        st.caption(f"Calories: {format_calorie_total_metric(weekly_calorie_summary)} total")
+    with summary_cards[2].container(border=True):
+        st.caption("Carryover Used")
+        st.write(summarize_carryover_usage(plan))
+        st.caption("Carryover stays separated from newly purchased ingredients.")
+    with summary_cards[3].container(border=True):
+        st.caption("Plan Balance Summary")
+        st.write(summarize_plan_balance(selection_diagnostics))
+        st.caption("Anchors, complementary sides, and week-level variety stay visible here.")
+    with summary_cards[4].container(border=True):
+        st.caption("Target Summary")
+        st.write(personal_target_summary[0] if personal_target_summary is not None else calorie_target_text)
+        st.caption(
+            personal_target_summary[1]
+            if personal_target_summary is not None
+            else "Manual calorie targets are active for this plan."
+        )
 
-    st.divider()
-    st.subheader("Budget And Calories")
-    top_metrics = st.columns(3)
-    top_metrics[0].metric("Weekly Budget", f"${request.weekly_budget:.2f}")
-    top_metrics[1].metric("Estimated Spend", f"${plan.estimated_total_cost:.2f}")
-    top_metrics[2].metric("Remaining", f"${remaining_budget:.2f}")
-    calorie_metrics = st.columns(2)
-    calorie_metrics[0].metric("Weekly Calories", f"{weekly_calories:,}")
-    calorie_metrics[1].metric("Average Per Day", f"{average_daily_calories:,}")
-    summary_left, summary_right = st.columns((3, 2))
-    with summary_left:
+    meta_left, meta_right = st.columns((3, 2))
+    with meta_left.container(border=True):
+        st.markdown("**Run Snapshot**")
         st.caption(f"Pricing source: {pricing_header}")
         if plan.selected_store:
             st.caption(f"Store: {plan.selected_store}")
+        st.caption(f"Pantry carryover file: `{DEFAULT_PANTRY_CARRYOVER_PATH}`")
+        st.caption(f"Meal structure: {' + '.join(value.title() for value in request.meal_structure or ('meal',))}")
         st.caption(f"Variety preference: {request.variety_preference.title()}")
         st.caption(f"Leftovers mode: {request.leftovers_mode.title()}")
-        st.caption("Meal structure: " + " + ".join(value.title() for value in request.meal_structure or ("meal",)))
-    with summary_right:
+        coverage_note = format_calorie_coverage_note(weekly_calorie_summary)
+        if coverage_note:
+            st.caption(coverage_note)
+        if weekly_nutrition_summary.is_partial:
+            st.caption(f"Nutrition is partial for {weekly_nutrition_summary.unknown_meal_count} meal(s).")
+    with meta_right.container(border=True):
         budget_status = "Within budget" if remaining_budget >= 0 else "Over budget"
-        with st.container(border=True):
-            st.markdown(f"**{budget_status}**")
-            st.write("The shopping list estimate reflects pantry subtraction and package-based purchase costs.")
-            st.markdown(f"Daily calorie target: **{calorie_target_text}**")
+        st.markdown(f"**{budget_status}**")
+        st.caption("Consumed cost estimates ingredient usage. Added shopping reflects whole-package purchases added to the cart.")
+        st.caption("Confidence labels stay compact on each meal card. Deeper reasoning is hidden until expanded.")
 
-    st.divider()
-    st.subheader("Export")
-    export_text = build_plan_text_export(request, plan)
-    save_col, text_col, csv_col = st.columns(3)
-    with save_col:
-        favorite_name = st.text_input(
-            "Favorite name",
-            key="favorite_name_input",
-            placeholder="Weeknight Favorites",
-            label_visibility="collapsed",
-        )
-        if st.button("Save As Favorite", use_container_width=True):
-            saved_record = FAVORITES_STORE.save_plan(
-                name=favorite_name or "Saved PantryPilot Plan",
-                saved_at=datetime.now().isoformat(timespec="seconds"),
-                request=request,
-                plan=plan,
-            )
-            st.session_state["plan_feedback"] = f"Saved plan as favorite: {saved_record.name}."
-            st.session_state["favorite_name_input"] = ""
-            st.rerun()
-    text_col.download_button(
-        "Download Weekly Plan (.txt)",
-        data=export_text,
-        file_name="pantrypilot_weekly_plan.txt",
-        mime="text/plain",
-        use_container_width=True,
+    export_text = build_plan_text_export(
+        request,
+        plan,
+        calorie_target_text,
+        repeat_label_getter=lambda meal: meal_repeat_label(request, plan, meal),
+        selection_diagnostics=selection_diagnostics,
     )
-    csv_col.download_button(
-        "Download Shopping List (.csv)",
-        data=build_shopping_list_csv(plan),
-        file_name="pantrypilot_shopping_list.csv",
-        mime="text/csv",
-        use_container_width=True,
+    weekly_tab, shopping_tab, carryover_tab, diagnostics_tab = st.tabs(
+        ("Weekly Plan", "Shopping List", "Pantry Carryover", "Diagnostics / Planner Reasoning")
     )
 
-    st.divider()
-    st.subheader("Weekly Plan")
-    st.caption("Each day shows meals, calorie totals, and whether the day lands inside the selected calorie target range.")
-    for day in range(1, 8):
-        day_meals = [meal for meal in plan.meals if meal.day == day]
-        daily_calories = sum(meal.recipe.estimated_calories_per_serving * meal.scaled_servings for meal in day_meals)
-        day_status, day_status_help = calorie_status_label(
-            daily_calories,
-            request.daily_calorie_target_min,
-            request.daily_calorie_target_max,
-        )
-        with st.container(border=True):
-            day_header, day_metrics = st.columns((2, 3))
-            day_header.markdown(f"### {day_name(day)}")
-            day_metric_cols = day_metrics.columns((1, 2, 2))
-            day_metric_cols[0].metric("Daily Calories", f"{daily_calories:,}")
-            day_metric_cols[1].markdown(f"**Target Range**  \n{calorie_target_text}")
-            day_metric_cols[2].markdown(f"**Status**  \n{day_status}")
-            st.caption(day_status_help)
+    with weekly_tab:
+        st.caption("The weekly board keeps daily summaries visible first. Meal-level rationale and nutrient diagnostics stay hidden until expanded.")
+        day_tabs = st.tabs(tuple(summary.label for summary in day_summaries))
+        for day_tab, day_summary in zip(day_tabs, day_summaries):
+            day_meals = [meal for meal in plan.meals if meal.day == day_summary.day]
+            with day_tab:
+                day_metrics = st.columns(5)
+                day_metrics[0].metric("Meals", str(day_summary.meal_count))
+                day_metrics[1].metric("Daily Calories", day_summary.calorie_display)
+                day_metrics[2].metric("Status", day_summary.status_label)
+                day_metrics[3].metric(
+                    "Consumed Cost",
+                    format_compact_currency_total(
+                        day_summary.consumed_cost_known_total,
+                        partial=day_summary.consumed_cost_is_partial,
+                    ),
+                )
+                day_metrics[4].metric("Added Shopping", f"${day_summary.added_shopping_total:.2f}")
+                st.caption(day_summary.status_help)
+                st.caption(f"Target range: {calorie_target_text}")
 
-            for meal in day_meals:
-                meal_title, meal_stats = st.columns((3, 2))
-                with meal_title:
+                for meal in day_meals:
+                    meal_calories = meal_total_calories(meal)
+                    meal_nutrition = meal_total_nutrition(meal)
+                    diagnostic = diagnostic_lookup.get((meal.day, meal.slot, meal.meal_role))
                     repeat_badge = meal_repeat_label(request, plan, meal)
-                    st.markdown(
-                        f"**{slot_label(request.meals_per_day, meal.slot, request.meal_structure)} {meal.slot}**: {meal.recipe.title}"
-                    )
-                    if repeat_badge is not None:
-                        st.caption(f"{repeat_badge[0]}: {repeat_badge[1]}")
-                    st.caption(
-                        "Cuisine: "
-                        + meal.recipe.cuisine.title()
-                        + " | Tags: "
-                        + ", ".join(sorted(meal.recipe.diet_tags))
-                    )
-                with meal_stats:
-                    prep_col, cost_col, calorie_col = st.columns(3)
-                    prep_col.metric("Prep Time", f"{meal.recipe.prep_time_minutes} min")
-                    cost_col.metric("Meal Cost", f"${meal.incremental_cost:.2f}")
-                    calorie_col.metric(
-                        "Calories",
-                        f"{meal.recipe.estimated_calories_per_serving * meal.scaled_servings:,}",
-                    )
-                    st.caption(f"Estimated calories per serving: {meal.recipe.estimated_calories_per_serving:,}")
-                    replace_button_key = f"replace-{meal.day}-{meal.slot}-{meal.recipe.recipe_id}"
-                    if st.button("Replace Meal", key=replace_button_key, use_container_width=True):
-                        try:
-                            updated_plan = planner.replace_meal(request, plan, meal.day, meal.slot)
-                            st.session_state["current_plan"] = updated_plan
-                            st.session_state["current_request"] = request
-                            st.session_state["plan_feedback"] = (
-                                f"Updated {day_name(meal.day)} "
-                                f"{slot_label(request.meals_per_day, meal.slot, request.meal_structure).lower()}."
+                    with st.container(border=True):
+                        meal_header, meal_stats = st.columns((3, 2))
+                        with meal_header:
+                            st.markdown(
+                                f"**{slot_label(request.meals_per_day, meal.slot, request.meal_structure)} {meal.slot}**"
+                                f" - **{meal.meal_role.replace('_', ' ').title()}**"
                             )
-                            st.session_state["plan_error"] = ""
-                            st.rerun()
-                        except PlannerError as exc:
-                            st.session_state["plan_error"] = str(exc)
-                            st.session_state["plan_feedback"] = ""
-                            st.rerun()
+                            st.write(meal.recipe.title)
+                            meta_bits = [meal.recipe.cuisine.title()]
+                            if meal.recipe.diet_tags:
+                                meta_bits.append(", ".join(sorted(meal.recipe.diet_tags)))
+                            if repeat_badge is not None:
+                                meta_bits.append(f"{repeat_badge[0]}: {repeat_badge[1]}")
+                            st.caption(" | ".join(meta_bits))
+                            st.caption(compact_selection_rationale(diagnostic))
+                            st.caption(f"Confidence: {format_estimate_confidence_label(meal, diagnostic)}")
+                        with meal_stats:
+                            stat_cols = st.columns(4)
+                            stat_cols[0].metric("Calories", "Unknown" if meal_calories is None else f"{meal_calories:,}")
+                            stat_cols[1].metric("Consumed", format_optional_currency(meal.consumed_cost))
+                            stat_cols[2].metric("Added", format_optional_currency(meal.incremental_cost))
+                            stat_cols[3].metric("Prep", format_optional_minutes(meal.recipe.prep_time_minutes))
+                        replace_button_key = f"replace-{meal.day}-{meal.slot}-{meal.recipe.recipe_id}"
+                        if meal.meal_role != "side" and st.button("Replace Main", key=replace_button_key, use_container_width=False):
+                            try:
+                                updated_plan = planner.replace_meal(request, plan, meal.day, meal.slot)
+                                st.session_state["current_plan"] = updated_plan
+                                st.session_state["current_request"] = request
+                                st.session_state["plan_feedback"] = (
+                                    f"Updated {day_name(meal.day)} "
+                                    f"{slot_label(request.meals_per_day, meal.slot, request.meal_structure).lower()}."
+                                )
+                                st.session_state["plan_error"] = ""
+                                st.rerun()
+                            except PlannerError as exc:
+                                st.session_state["plan_error"] = str(exc)
+                                st.session_state["plan_feedback"] = ""
+                                st.rerun()
 
-                with st.expander(f"Ingredients and steps for {meal.recipe.title}"):
-                    scale = meal.scaled_servings / meal.recipe.base_servings
-                    detail_left, detail_right = st.columns(2)
-                    with detail_left:
-                        st.markdown("**Ingredients**")
-                        for ingredient in meal.recipe.ingredients:
-                            st.write(f"- {round(ingredient.quantity * scale, 2)} {ingredient.unit} {ingredient.name}")
-                    with detail_right:
-                        st.markdown("**Steps**")
-                        for index, step in enumerate(meal.recipe.steps, start=1):
-                            st.write(f"{index}. {step}")
-                st.divider()
+                        with st.expander(f"Meal Details - {meal.recipe.title}"):
+                            note = confidence_note(meal, diagnostic)
+                            if note:
+                                st.info(note)
+                            st.caption(f"Meal nutrition: {format_optional_nutrition(meal_nutrition)}")
+                            st.caption(
+                                "Estimated calories per serving: "
+                                + format_optional_calories_per_serving(meal.recipe.estimated_calories_per_serving)
+                            )
+                            detail_left, detail_right = st.columns(2)
+                            scale = meal.scaled_servings / meal.recipe.base_servings
+                            with detail_left:
+                                st.markdown("**Ingredients**")
+                                for ingredient in meal.recipe.ingredients:
+                                    st.write(f"- {round(ingredient.quantity * scale, 2)} {ingredient.unit} {ingredient.name}")
+                            with detail_right:
+                                st.markdown("**Steps**")
+                                for index, step in enumerate(meal.recipe.steps, start=1):
+                                    st.write(f"{index}. {step}")
 
-    st.subheader("Shopping List")
-    st.caption("Needed amounts are recipe usage. Buying and package count reflect whole-package purchases.")
-    shopping_rows = [
-        {
-            "Ingredient": item.name,
-            "Amount Needed": f"{item.quantity} {item.unit}",
-            "Amount Being Bought": (
-                "N/A"
-                if item.purchased_quantity == 0
-                else f"{item.purchased_quantity} {item.package_unit}"
-            ),
-            "Package Count": item.estimated_packages,
-            "Estimated Cost": "N/A" if item.estimated_cost is None else f"${item.estimated_cost:.2f}",
-        }
-        for item in plan.shopping_list
-    ]
-    st.dataframe(shopping_rows, use_container_width=True, hide_index=True)
+                        with st.expander(f"Planning Rationale - {meal.recipe.title}"):
+                            st.write(compact_selection_rationale(diagnostic))
+                            if diagnostic is not None:
+                                st.caption(f"Daily state before: {format_daily_nutrient_state(diagnostic.daily_state_before)}")
+                                st.caption(f"Daily state after: {format_daily_nutrient_state(diagnostic.daily_state_after)}")
+                                st.caption(
+                                    "Remaining deficits before: "
+                                    + format_daily_nutrient_deficits(diagnostic.daily_deficits_before)
+                                )
+                                st.caption(
+                                    "Remaining deficits after: "
+                                    + format_daily_nutrient_deficits(diagnostic.daily_deficits_after)
+                                )
+                                if diagnostic.meal_role == "side":
+                                    st.caption(
+                                        "Main composition: "
+                                        + format_meal_composition_profile(diagnostic.anchor_composition_profile)
+                                    )
+                                    st.caption(
+                                        "Side composition: "
+                                        + format_meal_composition_profile(diagnostic.selected_composition_profile)
+                                    )
+                                    if diagnostic.runner_up_title:
+                                        st.caption(f"Runner-up side: {diagnostic.runner_up_title}")
+                                    if diagnostic.runner_up_loss_reasons:
+                                        st.caption(
+                                            "Runner-up lost because: "
+                                            + ", ".join(diagnostic.runner_up_loss_reasons)
+                                        )
+
+    with shopping_tab:
+        st.caption("Shopping is grouped for scanning first. Amounts, carryover reuse, leftover estimates, and shopping-cost semantics remain unchanged.")
+        for section in shopping_sections:
+            with st.expander(f"{section.title} ({len(section.rows)})", expanded=section.title in {"Produce", "Protein"}):
+                st.dataframe(
+                    [
+                        {
+                            "Ingredient": row.ingredient,
+                            "Amount Needed": row.amount_needed,
+                            "Carryover Used": row.carryover_used,
+                            "Amount Being Bought": row.amount_being_bought,
+                            "Leftover After Plan": row.leftover_after_plan,
+                            "Package Count": row.package_count,
+                            "Estimated Cost": row.estimated_cost,
+                            "Price Source": row.price_source,
+                        }
+                        for row in section.rows
+                    ],
+                    use_container_width=True,
+                    hide_index=True,
+                )
+
+    with carryover_tab:
+        carryover_summary, inventory_card = st.columns((3, 2))
+        with carryover_summary.container(border=True):
+            st.markdown("**Carryover Summary**")
+            st.write(summarize_carryover_usage(plan))
+            st.caption("Needed amount is recipe usage. Carryover used shows pantry reuse before any new packages are bought.")
+            if pantry_inventory:
+                st.caption(
+                    "Carryover currently on hand: "
+                    + ", ".join(f"{item.name} ({round(item.quantity, 2)} {item.unit})" for item in pantry_inventory[:8])
+                    + (" ..." if len(pantry_inventory) > 8 else "")
+                )
+            else:
+                st.caption("Carryover currently on hand: none")
+        with inventory_card.container(border=True):
+            st.markdown("**Pantry Controls**")
+            if st.button("Apply Plan To Pantry Carryover", use_container_width=True):
+                updated_inventory = PANTRY_CARRYOVER_STORE.apply_plan(plan)
+                st.session_state["pantry_feedback"] = (
+                    f"Stored pantry carryover for {len(updated_inventory)} ingredient(s)."
+                )
+                st.rerun()
+            if st.button("Reset Pantry Carryover", use_container_width=True):
+                PANTRY_CARRYOVER_STORE.reset()
+                st.session_state["pantry_feedback"] = "Cleared pantry carryover."
+                st.rerun()
+
+    with diagnostics_tab:
+        if pricing_context.note or plan.notes:
+            with st.container(border=True):
+                st.markdown("**Planner Notes**")
+                if pricing_context.note:
+                    st.warning(pricing_context.note)
+                for note in plan.notes:
+                    st.info(note)
+        else:
+            st.caption("No planner notes for this run.")
+
+        export_col, text_col, csv_col = st.columns(3)
+        with export_col:
+            favorite_name = st.text_input(
+                "Favorite name",
+                key="favorite_name_input",
+                placeholder="Weeknight Favorites",
+                label_visibility="collapsed",
+            )
+            if st.button("Save As Favorite", use_container_width=True):
+                saved_record = FAVORITES_STORE.save_plan(
+                    name=favorite_name or "Saved PantryPilot Plan",
+                    saved_at=datetime.now().isoformat(timespec="seconds"),
+                    request=request,
+                    plan=plan,
+                )
+                st.session_state["plan_feedback"] = f"Saved plan as favorite: {saved_record.name}."
+                st.session_state["favorite_name_input"] = ""
+                st.rerun()
+        text_col.download_button(
+            "Download Weekly Plan (.txt)",
+            data=export_text,
+            file_name="pantrypilot_weekly_plan.txt",
+            mime="text/plain",
+            use_container_width=True,
+        )
+        csv_col.download_button(
+            "Download Shopping List (.csv)",
+            data=build_shopping_list_csv(plan),
+            file_name="pantrypilot_shopping_list.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+
+        with st.expander("Full Planner Export"):
+            st.code(export_text, language="text")
 
 
 initialize_form_state()
@@ -639,7 +711,18 @@ with st.container(border=True):
             f"Selected target: {st.session_state['calorie_target_min_input']:,} to "
             f"{st.session_state['calorie_target_max_input']:,} calories per day"
         )
-        st.caption("The planner now uses this range to favor days that land closer to the target.")
+        profile_preview = None
+        _, preview_targets = current_profile_targets(meals_per_day=len(meal_structure_for_label(st.session_state["meal_structure_input"])))
+        if preview_targets is not None:
+            profile_preview = summarize_targets(preview_targets)
+        if profile_preview is not None:
+            st.caption(
+                "Personal targets are enabled. This run will use "
+                + profile_preview.calorie_target_text
+                + " instead of the manual slider."
+            )
+        else:
+            st.caption("The planner uses this range to favor days that land closer to the target.")
 
 st.subheader("Pricing")
 pricing_mode = st.radio(
@@ -765,16 +848,54 @@ with st.form("weekly-planner-form"):
             "Calories, variety, and leftovers all influence selection. Allergy filtering and budget checks still apply first."
         )
 
+    st.divider()
+    st.markdown("**Personal Target Guidance**")
+    use_personal_targets = st.checkbox(
+        "Use personal planning targets",
+        key="use_personal_targets_input",
+        help="Generate estimated calorie, macro, and food-group targets from a simple profile. This is planning guidance, not medical advice.",
+    )
+    if use_personal_targets:
+        profile_left, profile_mid, profile_right = st.columns(3)
+        with profile_left:
+            st.number_input("Age", min_value=18, max_value=90, step=1, key="profile_age_input")
+            st.selectbox("Sex", ("Female", "Male"), key="profile_sex_input")
+        with profile_mid:
+            st.number_input("Height (cm)", min_value=120.0, max_value=230.0, step=1.0, key="profile_height_cm_input")
+            st.number_input("Weight (kg)", min_value=35.0, max_value=250.0, step=1.0, key="profile_weight_kg_input")
+        with profile_right:
+            st.selectbox("Activity level", PROFILE_ACTIVITY_OPTIONS, key="profile_activity_input")
+            st.selectbox("Planning goal", PROFILE_GOAL_OPTIONS, key="profile_goal_input")
+
+        _, preview_targets = current_profile_targets(meals_per_day=len(selected_meal_structure))
+        preview_summary = summarize_targets(preview_targets)
+        if preview_summary is not None:
+            st.caption("Estimated personal target: " + preview_summary.calorie_target_text)
+            st.caption("Macro guidance: " + preview_summary.macro_target_text)
+            st.caption("Food-group guidance: " + preview_summary.food_group_target_text)
+            st.caption(preview_summary.guidance_note)
+
     submitted = st.form_submit_button("Create 7-day plan", use_container_width=True)
 
 
 if submitted:
+    _, submitted_targets = current_profile_targets(meals_per_day=len(selected_meal_structure))
+    validation_calorie_min = (
+        submitted_targets.calorie_target_min
+        if submitted_targets is not None
+        else st.session_state["calorie_target_min_input"]
+    )
+    validation_calorie_max = (
+        submitted_targets.calorie_target_max
+        if submitted_targets is not None
+        else st.session_state["calorie_target_max_input"]
+    )
     validation_errors, validation_warnings = validate_request_inputs(
         weekly_budget=float(weekly_budget),
         max_prep_time=int(max_prep_time),
         meals_per_day=len(selected_meal_structure),
-        calorie_target_min=st.session_state["calorie_target_min_input"],
-        calorie_target_max=st.session_state["calorie_target_max_input"],
+        calorie_target_min=validation_calorie_min,
+        calorie_target_max=validation_calorie_max,
         csv_inputs={
             "Cuisine preferences": cuisine_preferences,
             "Diet restrictions": diet_restrictions,
@@ -793,6 +914,18 @@ if submitted:
             st.write(f"- {error_message}")
         st.stop()
 
+    user_profile, personal_targets = current_profile_targets(meals_per_day=len(selected_meal_structure))
+    effective_calorie_min = (
+        personal_targets.calorie_target_min
+        if personal_targets is not None
+        else st.session_state["calorie_target_min_input"]
+    )
+    effective_calorie_max = (
+        personal_targets.calorie_target_max
+        if personal_targets is not None
+        else st.session_state["calorie_target_max_input"]
+    )
+
     request = PlannerRequest(
         weekly_budget=float(weekly_budget),
         servings=int(servings),
@@ -807,31 +940,96 @@ if submitted:
         zip_code=zip_code.strip(),
         pricing_mode=normalize_name(pricing_mode),
         store_location_id=location_options.get(selected_store_label, ""),
-        daily_calorie_target_min=st.session_state["calorie_target_min_input"],
-        daily_calorie_target_max=st.session_state["calorie_target_max_input"],
+        daily_calorie_target_min=effective_calorie_min,
+        daily_calorie_target_max=effective_calorie_max,
         variety_preference=normalize_name(variety_preference),
         leftovers_mode=normalize_name(leftovers_mode),
+        user_profile=user_profile,
+        personal_targets=personal_targets,
     )
-    planner, pricing_context = build_planner_and_context(request)
+    progress_header = st.empty()
+    progress_detail = st.empty()
+    progress_bar = st.progress(0, text="Starting PantryPilot planner...")
+
+    def update_progress(progress) -> None:
+        progress_header.info(f"{progress.label}")
+        if progress.detail:
+            progress_detail.caption(progress.detail)
+        progress_bar.progress(
+            min(max(int(progress.percent * 100), 0), 100),
+            text=f"{progress.stage.title()}: {progress.label}",
+        )
 
     try:
+        planner, pricing_context, pantry_inventory = build_planner_and_context(
+            request,
+            progress_callback=update_progress,
+        )
         plan = planner.create_plan(request)
+        progress_header.success("Weekly plan ready.")
+        progress_detail.caption("Planning finished successfully.")
+        progress_bar.progress(100, text="Complete: weekly plan ready")
         st.session_state["current_request"] = request
         st.session_state["current_plan"] = plan
         st.session_state["plan_feedback"] = ""
         st.session_state["plan_error"] = ""
     except PlannerError as exc:
-        headline, likely_causes = diagnose_plan_failure(planner, request)
+        current_plan_exists = (
+            st.session_state.get("current_request") is not None
+            and st.session_state.get("current_plan") is not None
+        )
+        if is_transient_runtime_failure(str(exc)):
+            headline, likely_causes = build_runtime_failure_feedback(
+                str(exc),
+                has_saved_plan=current_plan_exists,
+            )
+        else:
+            _, likely_causes = diagnose_plan_failure(planner, request)
+            headline, likely_causes = build_failure_feedback(str(exc), likely_causes)
+        progress_header.error("Planning stopped before a full week was built.")
+        progress_detail.caption("The progress state above shows the last completed planning stage.")
+        st.session_state["plan_error"] = headline
+        st.session_state["plan_feedback"] = (
+            "Showing the last successful plan while this request is retried."
+            if current_plan_exists
+            else ""
+        )
         st.error(headline)
-        st.caption(str(exc))
+        if likely_causes:
+            with st.container(border=True):
+                st.markdown("**Likely Causes**")
+                for cause in likely_causes:
+                    st.write(f"- {cause}")
+        if is_transient_runtime_failure(str(exc)):
+            st.info("Retry the same request in a moment. This currently looks like a temporary system problem, not a planner-settings problem.")
+        else:
+            st.info(
+                "Try increasing the budget, widening the calorie target, loosening cuisine or diet filters, "
+                "or reducing meals per day."
+            )
+    except Exception as exc:
+        current_plan_exists = (
+            st.session_state.get("current_request") is not None
+            and st.session_state.get("current_plan") is not None
+        )
+        headline, likely_causes = build_runtime_failure_feedback(
+            str(exc),
+            has_saved_plan=current_plan_exists,
+        )
+        progress_header.error("Planning stopped because of a runtime error.")
+        progress_detail.caption("The progress state above shows the last completed planning stage.")
+        st.session_state["plan_error"] = headline
+        st.session_state["plan_feedback"] = (
+            "Showing the last successful plan while this request is retried."
+            if current_plan_exists
+            else ""
+        )
+        st.error(headline)
         with st.container(border=True):
             st.markdown("**Likely Causes**")
             for cause in likely_causes:
                 st.write(f"- {cause}")
-        st.info(
-            "Try increasing the budget, widening the calorie target, loosening cuisine or diet filters, "
-            "or reducing meals per day."
-        )
+        st.info("Retry the same request first. If the error repeats consistently, then treat it as a real app/runtime issue.")
 else:
     st.caption(
         "Pick a preset or enter your own constraints, then generate a plan. The planner remains deterministic for "
@@ -841,6 +1039,7 @@ else:
 stored_request = st.session_state.get("current_request")
 stored_plan = st.session_state.get("current_plan")
 if stored_request is not None and stored_plan is not None:
-    planner, pricing_context = build_planner_and_context(stored_request)
-    render_meal_plan(stored_request, stored_plan, planner, pricing_context)
+    planner, pricing_context, pantry_inventory = build_planner_and_context(stored_request)
+    render_meal_plan(stored_request, stored_plan, planner, pricing_context, pantry_inventory)
 render_saved_plans()
+

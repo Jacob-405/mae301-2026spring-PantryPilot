@@ -6,7 +6,17 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from pantry_pilot.models import MealPlan, PlannedMeal, PlannerRequest, Recipe, RecipeIngredient, ShoppingListItem
+from pantry_pilot.models import (
+    MealPlan,
+    NutritionEstimate,
+    PersonalNutritionTargets,
+    PlannedMeal,
+    PlannerRequest,
+    Recipe,
+    RecipeIngredient,
+    ShoppingListItem,
+    UserNutritionProfile,
+)
 
 
 DEFAULT_FAVORITES_PATH = Path(__file__).resolve().parent.parent / "data" / "saved_plans.json"
@@ -102,6 +112,12 @@ class FavoritePlanStore:
         request_data["diet_restrictions"] = tuple(request_data.get("diet_restrictions", ()))
         request_data["pantry_staples"] = tuple(request_data.get("pantry_staples", ()))
         request_data["meal_structure"] = tuple(request_data.get("meal_structure", ()))
+        user_profile = request_data.get("user_profile")
+        request_data["user_profile"] = None if user_profile is None else UserNutritionProfile(**user_profile)
+        personal_targets = request_data.get("personal_targets")
+        request_data["personal_targets"] = (
+            None if personal_targets is None else PersonalNutritionTargets(**personal_targets)
+        )
         plan_data = dict(row["plan"])
         meals = tuple(self._deserialize_planned_meal(item) for item in plan_data.get("meals", ()))
         shopping_list = tuple(
@@ -129,6 +145,8 @@ class FavoritePlanStore:
             "recipe": self._serialize_recipe(meal.recipe),
             "scaled_servings": meal.scaled_servings,
             "incremental_cost": meal.incremental_cost,
+            "consumed_cost": meal.consumed_cost,
+            "meal_role": meal.meal_role,
         }
 
     def _serialize_recipe(self, recipe: Recipe) -> dict[str, Any]:
@@ -144,6 +162,11 @@ class FavoritePlanStore:
             "allergens": None if recipe.allergens is None else sorted(recipe.allergens),
             "ingredients": [asdict(ingredient) for ingredient in recipe.ingredients],
             "steps": list(recipe.steps),
+            "estimated_nutrition_per_serving": (
+                None
+                if recipe.estimated_nutrition_per_serving is None
+                else asdict(recipe.estimated_nutrition_per_serving)
+            ),
         }
 
     def _deserialize_planned_meal(self, row: dict[str, Any]) -> PlannedMeal:
@@ -152,6 +175,10 @@ class FavoritePlanStore:
         recipe_data["diet_tags"] = frozenset(recipe_data.get("diet_tags", ()))
         allergens = recipe_data.get("allergens")
         recipe_data["allergens"] = None if allergens is None else frozenset(allergens)
+        nutrition = recipe_data.get("estimated_nutrition_per_serving")
+        recipe_data["estimated_nutrition_per_serving"] = (
+            None if nutrition is None else NutritionEstimate(**nutrition)
+        )
         recipe_data["ingredients"] = tuple(
             RecipeIngredient(**ingredient) for ingredient in recipe_data.get("ingredients", ())
         )
@@ -162,4 +189,10 @@ class FavoritePlanStore:
             recipe=Recipe(**recipe_data),
             scaled_servings=int(row["scaled_servings"]),
             incremental_cost=float(row["incremental_cost"]),
+            consumed_cost=(
+                None
+                if row.get("consumed_cost") is None
+                else float(row["consumed_cost"])
+            ),
+            meal_role=str(row.get("meal_role", "main")),
         )
